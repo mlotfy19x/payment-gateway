@@ -103,6 +103,21 @@ class TamaraPaymentDTOBuilder
         return $this;
     }
 
+    /**
+     * Add a single item to the order
+     *
+     * @param string $referenceId
+     * @param string $type
+     * @param string $name
+     * @param string $sku
+     * @param float $unitPrice
+     * @param float $totalAmount
+     * @param string $imageUrl
+     * @param string $itemUrl
+     * @param float $discountAmount
+     * @param int $quantity
+     * @return $this
+     */
     public function item(
         string $referenceId,
         string $type,
@@ -127,6 +142,38 @@ class TamaraPaymentDTOBuilder
             quantity: $quantity,
             totalAmount: $totalAmount
         );
+
+        return $this;
+    }
+
+    /**
+     * Add multiple items to the order at once
+     *
+     * @param array $items Array of TamaraOrderItemDTO instances or arrays that can be converted to TamaraOrderItemDTO
+     * @return $this
+     */
+    public function items(array $items): self
+    {
+        foreach ($items as $item) {
+            if ($item instanceof TamaraOrderItemDTO) {
+                $this->items[] = $item;
+            } elseif (is_array($item)) {
+                $this->items[] = new TamaraOrderItemDTO(
+                    referenceId: $item['referenceId'] ?? $item['reference_id'] ?? '',
+                    type: $item['type'] ?? 'Physical',
+                    name: $item['name'] ?? $item['title'] ?? '',
+                    sku: $item['sku'] ?? '',
+                    imageUrl: $item['imageUrl'] ?? $item['image_url'] ?? '',
+                    itemUrl: $item['itemUrl'] ?? $item['item_url'] ?? '',
+                    unitPrice: $item['unitPrice'] ?? $item['unit_price'] ?? 0.0,
+                    discountAmount: $item['discountAmount'] ?? $item['discount_amount'] ?? 0.0,
+                    quantity: $item['quantity'] ?? 1,
+                    totalAmount: $item['totalAmount'] ?? $item['total_amount'] ?? 0.0
+                );
+            } else {
+                throw new \InvalidArgumentException('Items must be instances of TamaraOrderItemDTO or arrays');
+            }
+        }
 
         return $this;
     }

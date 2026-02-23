@@ -72,6 +72,16 @@ class TabbyPaymentDTOBuilder
         return $this;
     }
 
+    /**
+     * Add a single item to the order
+     *
+     * @param string $referenceId
+     * @param string $title
+     * @param string|null $description
+     * @param int $quantity
+     * @param float $unitPrice
+     * @return $this
+     */
     public function item(
         string $referenceId,
         string $title,
@@ -86,6 +96,33 @@ class TabbyPaymentDTOBuilder
             quantity: $quantity,
             unitPrice: $unitPrice
         );
+
+        return $this;
+    }
+
+    /**
+     * Add multiple items to the order at once
+     *
+     * @param array $items Array of OrderItemDTO instances or arrays that can be converted to OrderItemDTO
+     * @return $this
+     */
+    public function items(array $items): self
+    {
+        foreach ($items as $item) {
+            if ($item instanceof OrderItemDTO) {
+                $this->items[] = $item;
+            } elseif (is_array($item)) {
+                $this->items[] = new OrderItemDTO(
+                    referenceId: $item['referenceId'] ?? $item['reference_id'] ?? '',
+                    title: $item['title'] ?? $item['name'] ?? '',
+                    description: $item['description'] ?? null,
+                    quantity: $item['quantity'] ?? 1,
+                    unitPrice: $item['unitPrice'] ?? $item['unit_price'] ?? 0.0
+                );
+            } else {
+                throw new \InvalidArgumentException('Items must be instances of OrderItemDTO or arrays');
+            }
+        }
 
         return $this;
     }

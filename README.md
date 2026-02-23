@@ -354,6 +354,8 @@ return redirect($paymentInfo['url']);
 
 ### Using Builder Pattern
 
+#### Single Item
+
 ```php
 use ML\PaymentGateway\Builders\TabbyPaymentDTOBuilder;
 use ML\PaymentGateway\Factory\PaymentGatewayFactory;
@@ -389,6 +391,92 @@ $tabbyDTO = TabbyPaymentDTOBuilder::new()
 $factory = new PaymentGatewayFactory();
 $gateway = $factory->make('tabby');
 $paymentInfo = $gateway->initiatePayment($tabbyDTO);
+```
+
+#### Multiple Items
+
+You can add multiple items in two ways:
+
+**Option 1: Using `item()` method multiple times**
+
+```php
+$tabbyDTO = TabbyPaymentDTOBuilder::new()
+    ->order(...)
+    ->buyer(...)
+    ->shippingAddress(...)
+    ->item(
+        referenceId: "service-1",
+        title: "Service 1",
+        description: "Description 1",
+        quantity: 1,
+        unitPrice: 200.00
+    )
+    ->item(
+        referenceId: "service-2",
+        title: "Service 2",
+        description: "Description 2",
+        quantity: 2,
+        unitPrice: 150.00
+    )
+    ->build();
+```
+
+**Option 2: Using `items()` method with array**
+
+```php
+use ML\PaymentGateway\DTOs\OrderItemDTO;
+
+$items = [
+    new OrderItemDTO(
+        referenceId: "service-1",
+        title: "Service 1",
+        description: "Description 1",
+        quantity: 1,
+        unitPrice: 200.00
+    ),
+    new OrderItemDTO(
+        referenceId: "service-2",
+        title: "Service 2",
+        description: "Description 2",
+        quantity: 2,
+        unitPrice: 150.00
+    ),
+];
+
+$tabbyDTO = TabbyPaymentDTOBuilder::new()
+    ->order(...)
+    ->buyer(...)
+    ->shippingAddress(...)
+    ->items($items)
+    ->build();
+```
+
+**Option 3: Using `items()` with array of arrays**
+
+```php
+$items = [
+    [
+        'referenceId' => "service-1",
+        'title' => "Service 1",
+        'description' => "Description 1",
+        'quantity' => 1,
+        'unitPrice' => 200.00
+    ],
+    [
+        'referenceId' => "service-2",
+        'title' => "Service 2",
+        'description' => "Description 2",
+        'quantity' => 2,
+        'unitPrice' => 150.00
+    ],
+];
+
+$tabbyDTO = TabbyPaymentDTOBuilder::new()
+    ->order(...)
+    ->buyer(...)
+    ->shippingAddress(...)
+    ->items($items)
+    ->build();
 ```
 
 ### Using Tamara
@@ -437,6 +525,72 @@ $tamaraDTO = TamaraPaymentDTOBuilder::new()
 $factory = new PaymentGatewayFactory();
 $gateway = $factory->make('tamara');
 $paymentInfo = $gateway->initiatePayment($tamaraDTO);
+```
+
+#### Multiple Items
+
+You can add multiple items using the same methods as Tabby:
+
+**Using `item()` method multiple times:**
+
+```php
+$tamaraDTO = TamaraPaymentDTOBuilder::new()
+    ->order(...)
+    ->consumer(...)
+    ->billingAddress(...)
+    ->shippingAddress(...)
+    ->item(
+        referenceId: "service-1",
+        type: 'Physical',
+        name: "Service 1",
+        sku: "SERVICE-1",
+        unitPrice: 200.00,
+        totalAmount: 200.00
+    )
+    ->item(
+        referenceId: "service-2",
+        type: 'Physical',
+        name: "Service 2",
+        sku: "SERVICE-2",
+        unitPrice: 150.00,
+        totalAmount: 300.00,
+        quantity: 2
+    )
+    ->build();
+```
+
+**Using `items()` method with array:**
+
+```php
+use ML\PaymentGateway\DTOs\TamaraOrderItemDTO;
+
+$items = [
+    new TamaraOrderItemDTO(
+        referenceId: "service-1",
+        type: 'Physical',
+        name: "Service 1",
+        sku: "SERVICE-1",
+        unitPrice: 200.00,
+        totalAmount: 200.00
+    ),
+    new TamaraOrderItemDTO(
+        referenceId: "service-2",
+        type: 'Physical',
+        name: "Service 2",
+        sku: "SERVICE-2",
+        unitPrice: 150.00,
+        totalAmount: 300.00,
+        quantity: 2
+    ),
+];
+
+$tamaraDTO = TamaraPaymentDTOBuilder::new()
+    ->order(...)
+    ->consumer(...)
+    ->billingAddress(...)
+    ->shippingAddress(...)
+    ->items($items)
+    ->build();
 ```
 
 ## Handling Payment Events
