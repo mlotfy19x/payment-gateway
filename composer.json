@@ -1,0 +1,54 @@
+{
+    "name": "ml/payment-gateway",
+    "description": "Laravel Payment Gateway Package for Tabby and Tamara",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "payment",
+        "gateway",
+        "tabby",
+        "tamara",
+        "payment-gateway"
+    ],
+    "authors": [
+        {
+            "name": "ML",
+            "email": "info@ml.com"
+        }
+    ],
+    "homepage": "https://github.com/your-org/ml-payment-gateway",
+    "support": {
+        "issues": "https://github.com/your-org/ml-payment-gateway/issues",
+        "source": "https://github.com/your-org/ml-payment-gateway"
+    },
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^10.0|^11.0",
+        "illuminate/support": "^10.0|^11.0",
+        "illuminate/http": "^10.0|^11.0",
+        "illuminate/database": "^10.0|^11.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5|^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ML\\PaymentGateway\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ML\\PaymentGateway\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ML\\PaymentGateway\\PaymentGatewayServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
