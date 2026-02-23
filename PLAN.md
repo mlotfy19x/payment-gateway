@@ -65,6 +65,8 @@ packages/ML/PaymentGateway/
 │   │       └── PaymentWebhookController.php
 │   ├── Models/
 │   │   └── PaymentTransaction.php
+│   ├── Services/
+│   │   └── WebhookVerificationService.php
 │   └── PaymentGatewayServiceProvider.php
 ├── composer.json
 ├── README.md
@@ -249,7 +251,24 @@ All events receive `PaymentTransaction` model:
 - Route: `POST /webhooks/payment/{gateway}`
 - Handles server-to-server notifications
 
-### 8. Models
+### 8. Webhook Verification
+
+#### `WebhookVerificationService`
+**Purpose:** Centralized service for verifying webhook signatures/tokens from all gateways.
+
+**Methods:**
+- `verify(Request $request, string $gateway): bool` - Main verification method
+- `verifyTamara(Request $request): bool` - Tamara JWT token verification
+- `verifyTabby(Request $request): bool` - Tabby HMAC-SHA256 signature verification
+
+**How It Works:**
+1. Webhook arrives at `PaymentWebhookController`
+2. Controller calls `WebhookVerificationService::verify()`
+3. Service routes to gateway-specific verification method
+4. If verification fails, request is rejected (returns 200 to prevent retries)
+5. If verification succeeds, request is processed
+
+### 9. Models
 
 #### `PaymentTransaction`
 **Polymorphic Relationship:**
@@ -270,7 +289,7 @@ public function payable(): MorphTo
 - `status` (enum: pending, success, failed)
 - `response` (JSON)
 
-### 9. Configuration
+### 10. Configuration
 
 #### `config/payment-gateway.php`
 - `default_gateway`: Default gateway to use
@@ -483,16 +502,25 @@ When adding tests (future work):
 
 ## 🔐 Security Considerations
 
-1. **Webhook Verification:**
-   - Tamara: Token verification implemented
-   - Tabby: Verify signatures if available
+1. **Webhook Signature Verification:**
+   - **Tamara**: JWT token verification implemented
+     - Token can be in query parameter (`tamaraToken`) or Authorization header
+     - Uses HMAC-SHA256 with `notification_token`
+     - Verifies token expiration
+   - **Tabby**: HMAC-SHA256 signature verification implemented
+     - Signature in `X-Tabby-Signature`, `X-Signature`, or `Signature` header
+     - Uses `secret_key` for verification
+     - Can be enabled/disabled via `TABBY_WEBHOOK_VERIFY_SIGNATURE` config
+   - **Implementation**: `WebhookVerificationService` handles all verification
+   - Verification happens in `PaymentWebhookController` before processing
 
 2. **CSRF Protection:**
-   - Callback/webhook routes excluded (documented)
+   - Callback/webhook routes excluded (documented in README)
 
 3. **Sensitive Data:**
    - Never log full payment responses
    - Mask sensitive information in logs
+   - Webhook verification failures are logged but return 200 to prevent gateway retries
 
 ## 📚 References
 
@@ -508,9 +536,10 @@ When adding tests (future work):
 - [ ] Add payment retry mechanism
 - [ ] Add payment status polling
 - [ ] Add payment analytics
-- [ ] Add webhook signature verification for all gateways
+- [x] Add webhook signature verification for all gateways ✅ (Completed)
 - [ ] Add rate limiting for webhooks
 - [ ] Add payment transaction query builder helpers
+- [ ] Enhance Tabby webhook verification based on official documentation
 
 ## 📞 Support
 

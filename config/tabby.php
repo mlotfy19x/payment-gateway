@@ -31,4 +31,17 @@ return [
     'redirect_cancel_url' => env('TABBY_REDIRECT_CANCEL_URL', ''),
 
     'currency' => env('TABBY_CURRENCY', 'SAR'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Signature Verification
+    |--------------------------------------------------------------------------
+    |
+    | Enable/disable webhook signature verification for Tabby.
+    | When enabled, webhooks without valid signature will be rejected.
+    | When disabled, webhooks will be accepted without signature verification.
+    |
+    */
+
+    'webhook_verify_signature' => env('TABBY_WEBHOOK_VERIFY_SIGNATURE', false),
 ];

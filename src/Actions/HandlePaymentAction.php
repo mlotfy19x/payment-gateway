@@ -198,24 +198,9 @@ class HandlePaymentAction
      */
     private function parseTamaraResponse(array $data, bool $is_webhook): ?array
     {
+        // Note: Tamara webhook verification is now handled in PaymentWebhookController
+        // via WebhookVerificationService before reaching this method
         $tamaraService = app(TamaraPaymentService::class);
-
-        if ($is_webhook) {
-            $request = request();
-            if ($request instanceof Request) {
-                $res = $tamaraService->verifyTamaraToken($request);
-                if (!$res) {
-                    Log::error('Tamara webhook token verification failed', [
-                        'response' => $data
-                    ]);
-                    return [
-                        'transaction_id' => null,
-                        'order_reference' => null,
-                        'is_success' => false,
-                    ];
-                }
-            }
-        }
 
         // Tamara sends 'order_id' in webhooks and 'orderId' in callbacks
         $orderId = $is_webhook ? Arr::get($data, 'order_id') : Arr::get($data, 'orderId');

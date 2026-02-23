@@ -6,14 +6,19 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use ML\PaymentGateway\Actions\HandlePaymentAction;
+use ML\PaymentGateway\Services\WebhookVerificationService;
 
 class PaymentWebhookController extends Controller
 {
     protected HandlePaymentAction $handlePaymentAction;
+    protected WebhookVerificationService $verificationService;
 
-    public function __construct(HandlePaymentAction $handlePaymentAction)
-    {
+    public function __construct(
+        HandlePaymentAction $handlePaymentAction,
+        WebhookVerificationService $verificationService
+    ) {
         $this->handlePaymentAction = $handlePaymentAction;
+        $this->verificationService = $verificationService;
     }
 
     /**
@@ -29,6 +34,18 @@ class PaymentWebhookController extends Controller
             'headers' => $request->headers->all(),
             'payload' => $request->all(),
         ]);
+
+        // Verify webhook signature before processing
+        if (!$this->verificationService->verify($request, $gateway)) {
+            Log::error("Webhook signature verification failed for {$gateway}", [
+                'headers' => $request->headers->all(),
+            ]);
+
+            // Return 200 to prevent gateway from retrying, but log the failure
+            return response()->json([
+                'message' => 'Webhook signature verification failed'
+            ], 200);
+        }
 
         try {
             $data = $request->all();

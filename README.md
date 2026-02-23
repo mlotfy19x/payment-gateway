@@ -561,6 +561,52 @@ The package automatically registers the following routes:
 - `POST /payment/callback/{gateway}` - Unified callback endpoint
 - `POST /webhooks/payment/{gateway}` - Webhook endpoint
 
+## Webhook Signature Verification
+
+The package includes built-in webhook signature verification for security. All webhooks are automatically verified before processing.
+
+### Tamara Webhook Verification
+
+Tamara uses JWT tokens for webhook verification. The token can be provided in:
+- Query parameter: `?tamaraToken=...`
+- Authorization header: `Bearer <token>`
+
+The package verifies:
+- JWT token format (header.payload.signature)
+- Signature using HMAC-SHA256 with `notification_token`
+- Token expiration (`exp` claim)
+
+**Configuration:**
+```env
+TAMARA_NOTIFICATION_TOKEN=your_notification_token
+```
+
+### Tabby Webhook Verification
+
+Tabby uses HMAC-SHA256 signature verification. The signature is expected in:
+- `X-Tabby-Signature` header (preferred)
+- `X-Signature` header (fallback)
+- `Signature` header (fallback)
+
+**Configuration:**
+```env
+TABBY_SECRET_KEY=your_secret_key
+TABBY_WEBHOOK_VERIFY_SIGNATURE=true  # Enable strict signature verification
+```
+
+**Note:** By default, Tabby webhook signature verification is disabled (`TABBY_WEBHOOK_VERIFY_SIGNATURE=false`) to maintain backward compatibility. Enable it when you're ready to enforce signature verification.
+
+### How It Works
+
+1. Webhook request arrives at `POST /webhooks/payment/{gateway}`
+2. `WebhookVerificationService` verifies the signature/token
+3. If verification fails, the request is rejected (but returns 200 to prevent gateway retries)
+4. If verification succeeds, the request is processed normally
+
+### Custom Verification
+
+You can extend `WebhookVerificationService` to add custom verification logic for other gateways or modify existing verification methods.
+
 ## Payment Transaction Model
 
 The `PaymentTransaction` model uses polymorphic relationships, so it can be associated with any model:
