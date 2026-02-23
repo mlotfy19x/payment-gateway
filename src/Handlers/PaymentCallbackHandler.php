@@ -1,10 +1,10 @@
 <?php
 
-namespace ML\PaymentGateway\Handlers;
+namespace MLQuarizm\PaymentGateway\Handlers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use ML\PaymentGateway\Actions\HandlePaymentAction;
+use MLQuarizm\PaymentGateway\Actions\HandlePaymentAction;
 
 class PaymentCallbackHandler
 {

@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use ML\PaymentGateway\Http\Controllers\PaymentCallbackController;
-use ML\PaymentGateway\Http\Controllers\PaymentWebhookController;
+use MLQuarizm\PaymentGateway\Http\Controllers\PaymentCallbackController;
+use MLQuarizm\PaymentGateway\Http\Controllers\PaymentWebhookController;
 
 /*
 |--------------------------------------------------------------------------

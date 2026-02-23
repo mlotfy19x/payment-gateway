@@ -1,11 +1,11 @@
 <?php
 
-namespace ML\PaymentGateway\Factory;
+namespace MLQuarizm\PaymentGateway\Factory;
 
 use InvalidArgumentException;
-use ML\PaymentGateway\Contracts\PaymentGatewayInterface;
-use ML\PaymentGateway\Gateways\TabbyPaymentService;
-use ML\PaymentGateway\Gateways\TamaraPaymentService;
+use MLQuarizm\PaymentGateway\Contracts\PaymentGatewayInterface;
+use MLQuarizm\PaymentGateway\Gateways\TabbyPaymentService;
+use MLQuarizm\PaymentGateway\Gateways\TamaraPaymentService;
 
 class PaymentGatewayFactory
 {

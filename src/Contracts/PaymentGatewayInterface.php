@@ -1,6 +1,6 @@
 <?php
 
-namespace ML\PaymentGateway\Contracts;
+namespace MLQuarizm\PaymentGateway\Contracts;
 
 interface PaymentGatewayInterface
 {

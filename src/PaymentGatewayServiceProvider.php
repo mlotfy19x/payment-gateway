@@ -1,6 +1,6 @@
 <?php
 
-namespace ML\PaymentGateway;
+namespace MLQuarizm\PaymentGateway;
 
 use Illuminate\Support\ServiceProvider;
 

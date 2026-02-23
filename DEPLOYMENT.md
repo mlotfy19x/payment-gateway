@@ -31,14 +31,14 @@
            }
        ],
        "require": {
-           "ml/payment-gateway": "dev-main"
+           "mlquarizm/payment-gateway": "dev-main"
        }
    }
    ```
 
    ثم:
    ```bash
-   composer require ml/payment-gateway:dev-main
+   composer require mlquarizm/payment-gateway:dev-main
    ```
 
 ## الطريقة 2: رفع على Packagist (Public Package)
@@ -58,7 +58,7 @@
 
 3. **الاستخدام:**
    ```bash
-   composer require ml/payment-gateway
+   composer require mlquarizm/payment-gateway
    ```
 
 ## الطريقة 3: استخدام Local Path (للتنمية فقط)
@@ -74,14 +74,14 @@
         }
     ],
     "require": {
-        "ml/payment-gateway": "*"
+        "mlquarizm/payment-gateway": "*"
     }
 }
 ```
 
 ثم:
 ```bash
-composer require ml/payment-gateway
+composer require mlquarizm/payment-gateway
 ```
 
 ## ملاحظات مهمة:

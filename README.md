@@ -9,7 +9,7 @@ Laravel package for integrating Tabby and Tamara payment gateways.
 ### Via Composer (if published to Packagist)
 
 ```bash
-composer require ml/payment-gateway
+composer require mlquarizm/payment-gateway
 ```
 
 ### Via Git Repository (Private Package)
@@ -25,7 +25,7 @@ Add to your `composer.json`:
         }
     ],
     "require": {
-        "ml/payment-gateway": "dev-main"
+        "mlquarizm/payment-gateway": "dev-main"
     }
 }
 ```
@@ -33,7 +33,7 @@ Add to your `composer.json`:
 Then run:
 
 ```bash
-composer require ml/payment-gateway:dev-main
+composer require mlquarizm/payment-gateway:dev-main
 ```
 
 ### Via Local Path (Development)
@@ -49,7 +49,7 @@ Add to your `composer.json`:
         }
     ],
     "require": {
-        "ml/payment-gateway": "*"
+        "mlquarizm/payment-gateway": "*"
     }
 }
 ```
@@ -57,7 +57,7 @@ Add to your `composer.json`:
 Then run:
 
 ```bash
-composer require ml/payment-gateway
+composer require mlquarizm/payment-gateway
 ```
 
 ## Configuration
@@ -286,13 +286,13 @@ return [
 ### Basic Usage with Tabby
 
 ```php
-use ML\PaymentGateway\Factory\PaymentGatewayFactory;
-use ML\PaymentGateway\DTOs\TabbyPaymentDTO;
-use ML\PaymentGateway\DTOs\PaymentOrderDTO;
-use ML\PaymentGateway\DTOs\BuyerDTO;
-use ML\PaymentGateway\DTOs\AddressDTO;
-use ML\PaymentGateway\DTOs\OrderItemDTO;
-use ML\PaymentGateway\Models\PaymentTransaction;
+use MLQuarizm\PaymentGateway\Factory\PaymentGatewayFactory;
+use MLQuarizm\PaymentGateway\DTOs\TabbyPaymentDTO;
+use MLQuarizm\PaymentGateway\DTOs\PaymentOrderDTO;
+use MLQuarizm\PaymentGateway\DTOs\BuyerDTO;
+use MLQuarizm\PaymentGateway\DTOs\AddressDTO;
+use MLQuarizm\PaymentGateway\DTOs\OrderItemDTO;
+use MLQuarizm\PaymentGateway\Models\PaymentTransaction;
 
 // Build DTOs
 $orderDTO = new PaymentOrderDTO(
@@ -357,8 +357,8 @@ return redirect($paymentInfo['url']);
 #### Single Item
 
 ```php
-use ML\PaymentGateway\Builders\TabbyPaymentDTOBuilder;
-use ML\PaymentGateway\Factory\PaymentGatewayFactory;
+use MLQuarizm\PaymentGateway\Builders\TabbyPaymentDTOBuilder;
+use MLQuarizm\PaymentGateway\Factory\PaymentGatewayFactory;
 
 $tabbyDTO = TabbyPaymentDTOBuilder::new()
     ->order(
@@ -424,7 +424,7 @@ $tabbyDTO = TabbyPaymentDTOBuilder::new()
 **Option 2: Using `items()` method with array**
 
 ```php
-use ML\PaymentGateway\DTOs\OrderItemDTO;
+use MLQuarizm\PaymentGateway\DTOs\OrderItemDTO;
 
 $items = [
     new OrderItemDTO(
@@ -482,8 +482,8 @@ $tabbyDTO = TabbyPaymentDTOBuilder::new()
 ### Using Tamara
 
 ```php
-use ML\PaymentGateway\Builders\TamaraPaymentDTOBuilder;
-use ML\PaymentGateway\Factory\PaymentGatewayFactory;
+use MLQuarizm\PaymentGateway\Builders\TamaraPaymentDTOBuilder;
+use MLQuarizm\PaymentGateway\Factory\PaymentGatewayFactory;
 
 $tamaraDTO = TamaraPaymentDTOBuilder::new()
     ->order(
@@ -562,7 +562,7 @@ $tamaraDTO = TamaraPaymentDTOBuilder::new()
 **Using `items()` method with array:**
 
 ```php
-use ML\PaymentGateway\DTOs\TamaraOrderItemDTO;
+use MLQuarizm\PaymentGateway\DTOs\TamaraOrderItemDTO;
 
 $items = [
     new TamaraOrderItemDTO(
@@ -601,19 +601,19 @@ The package uses Laravel Events to handle payment events. This allows you to lis
 
 The package dispatches the following events:
 
-- **`ML\PaymentGateway\Events\PaymentSuccess`** - Dispatched when a payment is successful
-- **`ML\PaymentGateway\Events\PaymentFailed`** - Dispatched when a payment fails
-- **`ML\PaymentGateway\Events\PaymentCancelled`** - Dispatched when a payment is cancelled
-- **`ML\PaymentGateway\Events\PaymentPending`** - Dispatched when a payment is pending
+- **`MLQuarizm\PaymentGateway\Events\PaymentSuccess`** - Dispatched when a payment is successful
+- **`MLQuarizm\PaymentGateway\Events\PaymentFailed`** - Dispatched when a payment fails
+- **`MLQuarizm\PaymentGateway\Events\PaymentCancelled`** - Dispatched when a payment is cancelled
+- **`MLQuarizm\PaymentGateway\Events\PaymentPending`** - Dispatched when a payment is pending
 
 ### Listening to Events
 
 Register event listeners in your `app/Providers/EventServiceProvider.php`:
 
 ```php
-use ML\PaymentGateway\Events\PaymentSuccess;
-use ML\PaymentGateway\Events\PaymentFailed;
-use ML\PaymentGateway\Events\PaymentCancelled;
+use MLQuarizm\PaymentGateway\Events\PaymentSuccess;
+use MLQuarizm\PaymentGateway\Events\PaymentFailed;
+use MLQuarizm\PaymentGateway\Events\PaymentCancelled;
 use App\Listeners\HandlePaymentSuccess;
 use App\Listeners\HandlePaymentFailure;
 use App\Listeners\HandlePaymentCancellation;
@@ -648,7 +648,7 @@ Example listener:
 
 namespace App\Listeners;
 
-use ML\PaymentGateway\Events\PaymentSuccess;
+use MLQuarizm\PaymentGateway\Events\PaymentSuccess;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -682,8 +682,8 @@ You can also use closures in `EventServiceProvider`:
 
 ```php
 use Illuminate\Support\Facades\Event;
-use ML\PaymentGateway\Events\PaymentSuccess;
-use ML\PaymentGateway\Events\PaymentFailed;
+use MLQuarizm\PaymentGateway\Events\PaymentSuccess;
+use MLQuarizm\PaymentGateway\Events\PaymentFailed;
 
 public function boot(): void
 {

@@ -1,15 +1,15 @@
 <?php
 
-namespace ML\PaymentGateway\Gateways;
+namespace MLQuarizm\PaymentGateway\Gateways;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use ML\PaymentGateway\Contracts\PaymentGatewayInterface;
-use ML\PaymentGateway\DTOs\AddressDTO;
-use ML\PaymentGateway\DTOs\ConsumerDTO;
-use ML\PaymentGateway\DTOs\TamaraOrderItemDTO;
-use ML\PaymentGateway\DTOs\TamaraPaymentDTO;
+use MLQuarizm\PaymentGateway\Contracts\PaymentGatewayInterface;
+use MLQuarizm\PaymentGateway\DTOs\AddressDTO;
+use MLQuarizm\PaymentGateway\DTOs\ConsumerDTO;
+use MLQuarizm\PaymentGateway\DTOs\TamaraOrderItemDTO;
+use MLQuarizm\PaymentGateway\DTOs\TamaraPaymentDTO;
 
 class TamaraPaymentService implements PaymentGatewayInterface
 {

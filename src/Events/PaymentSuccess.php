@@ -1,10 +1,10 @@
 <?php
 
-namespace ML\PaymentGateway\Events;
+namespace MLQuarizm\PaymentGateway\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use ML\PaymentGateway\Models\PaymentTransaction;
+use MLQuarizm\PaymentGateway\Models\PaymentTransaction;
 
 class PaymentSuccess
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace ML\PaymentGateway\Models;
+namespace MLQuarizm\PaymentGateway\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use ML\PaymentGateway\Enums\PaymentStatusEnum;
+use MLQuarizm\PaymentGateway\Enums\PaymentStatusEnum;
 
 class PaymentTransaction extends Model
 {

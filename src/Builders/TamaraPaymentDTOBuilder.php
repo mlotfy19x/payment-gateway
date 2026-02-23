@@ -1,12 +1,12 @@
 <?php
 
-namespace ML\PaymentGateway\Builders;
+namespace MLQuarizm\PaymentGateway\Builders;
 
-use ML\PaymentGateway\DTOs\AddressDTO;
-use ML\PaymentGateway\DTOs\ConsumerDTO;
-use ML\PaymentGateway\DTOs\PaymentOrderDTO;
-use ML\PaymentGateway\DTOs\TamaraOrderItemDTO;
-use ML\PaymentGateway\DTOs\TamaraPaymentDTO;
+use MLQuarizm\PaymentGateway\DTOs\AddressDTO;
+use MLQuarizm\PaymentGateway\DTOs\ConsumerDTO;
+use MLQuarizm\PaymentGateway\DTOs\PaymentOrderDTO;
+use MLQuarizm\PaymentGateway\DTOs\TamaraOrderItemDTO;
+use MLQuarizm\PaymentGateway\DTOs\TamaraPaymentDTO;
 
 class TamaraPaymentDTOBuilder
 {

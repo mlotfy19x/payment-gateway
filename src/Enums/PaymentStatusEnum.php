@@ -1,6 +1,6 @@
 <?php
 
-namespace ML\PaymentGateway\Enums;
+namespace MLQuarizm\PaymentGateway\Enums;
 
 enum PaymentStatusEnum: string
 {

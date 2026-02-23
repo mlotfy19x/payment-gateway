@@ -1,5 +1,5 @@
 {
-    "name": "ml/payment-gateway",
+    "name": "mlquarizm/payment-gateway",
     "description": "Laravel Payment Gateway Package for Tabby and Tamara",
     "type": "library",
     "license": "MIT",
@@ -34,18 +34,18 @@
     },
     "autoload": {
         "psr-4": {
-            "ML\\PaymentGateway\\": "src/"
+            "MLQuarizm\\PaymentGateway\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ML\\PaymentGateway\\Tests\\": "tests/"
+            "MLQuarizm\\PaymentGateway\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "ML\\PaymentGateway\\PaymentGatewayServiceProvider"
+                "MLQuarizm\\PaymentGateway\\PaymentGatewayServiceProvider"
             ]
         }
     },

@@ -1,15 +1,15 @@
 <?php
 
-namespace ML\PaymentGateway\Gateways;
+namespace MLQuarizm\PaymentGateway\Gateways;
 
-use ML\PaymentGateway\Contracts\PaymentGatewayInterface;
-use ML\PaymentGateway\DTOs\AddressDTO;
-use ML\PaymentGateway\DTOs\BuyerDTO;
-use ML\PaymentGateway\DTOs\BuyerHistoryDTO;
-use ML\PaymentGateway\DTOs\OrderHistoryDTO;
-use ML\PaymentGateway\DTOs\OrderItemDTO;
-use ML\PaymentGateway\DTOs\PaymentOrderDTO;
-use ML\PaymentGateway\DTOs\TabbyPaymentDTO;
+use MLQuarizm\PaymentGateway\Contracts\PaymentGatewayInterface;
+use MLQuarizm\PaymentGateway\DTOs\AddressDTO;
+use MLQuarizm\PaymentGateway\DTOs\BuyerDTO;
+use MLQuarizm\PaymentGateway\DTOs\BuyerHistoryDTO;
+use MLQuarizm\PaymentGateway\DTOs\OrderHistoryDTO;
+use MLQuarizm\PaymentGateway\DTOs\OrderItemDTO;
+use MLQuarizm\PaymentGateway\DTOs\PaymentOrderDTO;
+use MLQuarizm\PaymentGateway\DTOs\TabbyPaymentDTO;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 

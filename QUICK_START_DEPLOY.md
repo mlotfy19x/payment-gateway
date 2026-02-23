@@ -34,7 +34,7 @@ git push origin v1.0.0
         }
     ],
     "require": {
-        "ml/payment-gateway": "^1.0"
+        "mlquarizm/payment-gateway": "^1.0"
     }
 }
 ```
@@ -42,7 +42,7 @@ git push origin v1.0.0
 ### ثم:
 
 ```bash
-composer require ml/payment-gateway
+composer require mlquarizm/payment-gateway
 ```
 
 ## ملاحظات:

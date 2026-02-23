@@ -1,17 +1,17 @@
 <?php
 
-namespace ML\PaymentGateway\Actions;
+namespace MLQuarizm\PaymentGateway\Actions;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use ML\PaymentGateway\Events\PaymentSuccess;
-use ML\PaymentGateway\Events\PaymentFailed;
-use ML\PaymentGateway\Events\PaymentCancelled;
-use ML\PaymentGateway\Gateways\TabbyPaymentService;
-use ML\PaymentGateway\Gateways\TamaraPaymentService;
-use ML\PaymentGateway\Models\PaymentTransaction;
-use ML\PaymentGateway\Enums\PaymentStatusEnum;
+use MLQuarizm\PaymentGateway\Events\PaymentSuccess;
+use MLQuarizm\PaymentGateway\Events\PaymentFailed;
+use MLQuarizm\PaymentGateway\Events\PaymentCancelled;
+use MLQuarizm\PaymentGateway\Gateways\TabbyPaymentService;
+use MLQuarizm\PaymentGateway\Gateways\TamaraPaymentService;
+use MLQuarizm\PaymentGateway\Models\PaymentTransaction;
+use MLQuarizm\PaymentGateway\Enums\PaymentStatusEnum;
 
 class HandlePaymentAction
 {

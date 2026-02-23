@@ -1,6 +1,6 @@
 <?php
 
-namespace ML\PaymentGateway\DTOs;
+namespace MLQuarizm\PaymentGateway\DTOs;
 
 class ConsumerDTO
 {

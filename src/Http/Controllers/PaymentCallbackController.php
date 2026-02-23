@@ -1,11 +1,11 @@
 <?php
 
-namespace ML\PaymentGateway\Http\Controllers;
+namespace MLQuarizm\PaymentGateway\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
-use ML\PaymentGateway\Handlers\PaymentCallbackHandler;
+use MLQuarizm\PaymentGateway\Handlers\PaymentCallbackHandler;
 
 class PaymentCallbackController extends Controller
 {

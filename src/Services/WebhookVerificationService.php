@@ -1,6 +1,6 @@
 <?php
 
-namespace ML\PaymentGateway\Services;
+namespace MLQuarizm\PaymentGateway\Services;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
