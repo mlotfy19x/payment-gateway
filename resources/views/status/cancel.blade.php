@@ -12,6 +12,7 @@
         ._cancelled i { font-size: 55px; color: #ffc107; }
         ._cancelled h2 { margin-bottom: 12px; font-size: 40px; font-weight: 500; line-height: 1.2; margin-top: 10px; }
         ._cancelled p { font-size: 18px; color: #495057; font-weight: 500; margin-bottom: 0; }
+        ._cancelled a { display: inline-block; margin-top: 16px; color: #ffc107; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -20,9 +21,15 @@
         <i class="fa fa-times-circle" aria-hidden="true"></i>
         <h2>{{ app()->getLocale() == 'ar' ? 'تم إلغاء الدفع' : 'Payment Cancelled' }}</h2>
         <p>{{ app()->getLocale() == 'ar' ? 'لقد تم إلغاء عملية الدفع' : 'Your payment has been cancelled.' }}</p>
-        <p>{{ app()->getLocale() == 'ar' ? 'سيتم توجيهك خلال 5 ثوانٍ.' : 'You will be redirected in 5 seconds.' }}</p>
+        @if(!empty($hasRedirect))
+            <p>{{ app()->getLocale() == 'ar' ? 'سيتم توجيهك خلال 5 ثوانٍ.' : 'You will be redirected in 5 seconds.' }}</p>
+        @else
+            <a href="{!! $url !!}">{{ app()->getLocale() == 'ar' ? 'العودة للرئيسية' : 'Back to home' }}</a>
+        @endif
     </div>
 </div>
+@if(!empty($hasRedirect))
 <script>setTimeout(function () { window.location.href = '{!! $url !!}'; }, 5000);</script>
+@endif
 </body>
 </html>

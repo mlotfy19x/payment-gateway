@@ -67,13 +67,15 @@ class PaymentCallbackController extends Controller
 
         $transactionId = $result['transaction_id'] ?? null;
 
-        // Default: use package Blade (public status page)
+        // Default: use package Blade (public status page); include status in query for client listeners
         if (Route::has('payment-gateway.status')) {
             $params = ['status' => $status, 'gateway' => $gateway];
             if ($transactionId !== null) {
                 $params['transaction_id'] = $transactionId;
             }
-            return route('payment-gateway.status', $params);
+            $url = route('payment-gateway.status', $params);
+            $separator = str_contains($url, '?') ? '&' : '?';
+            return $url . $separator . 'status=' . rawurlencode($status);
         }
 
         $configKey = match ($status) {

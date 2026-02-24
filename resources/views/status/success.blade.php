@@ -12,6 +12,7 @@
         ._success i { font-size: 55px; color: #28a745; }
         ._success h2 { margin-bottom: 12px; font-size: 40px; font-weight: 500; line-height: 1.2; margin-top: 10px; }
         ._success p { font-size: 18px; color: #495057; font-weight: 500; margin-bottom: 0; }
+        ._success a { display: inline-block; margin-top: 16px; color: #28a745; font-weight: 500; }
     </style>
 </head>
 <body>
@@ -19,9 +20,16 @@
     <div class="message-box _success">
         <i class="fa fa-check-circle" aria-hidden="true"></i>
         <h2>{{ app()->getLocale() == 'ar' ? 'تم الدفع بنجاح' : 'Your payment was successful' }}</h2>
-        <p>{{ app()->getLocale() == 'ar' ? 'سيتم توجيهك خلال 5 ثوانٍ.' : 'You will be redirected in 5 seconds.' }}</p>
+        @if(!empty($hasRedirect))
+            <p>{{ app()->getLocale() == 'ar' ? 'سيتم توجيهك خلال 5 ثوانٍ.' : 'You will be redirected in 5 seconds.' }}</p>
+        @else
+            <p>{{ app()->getLocale() == 'ar' ? 'اضغط للعودة للرئيسية' : 'Click to go back' }}</p>
+            <a href="{!! $url !!}">{{ app()->getLocale() == 'ar' ? 'العودة للرئيسية' : 'Back to home' }}</a>
+        @endif
     </div>
 </div>
+@if(!empty($hasRedirect))
 <script>setTimeout(function () { window.location.href = '{!! $url !!}'; }, 5000);</script>
+@endif
 </body>
 </html>
