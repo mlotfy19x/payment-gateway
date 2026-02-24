@@ -27,17 +27,22 @@ class PaymentStatusController extends Controller
     protected function buildRedirectUrl(?string $transactionId): string
     {
         $template = config('payment-gateway.redirect_after_status_url', '');
+        $fallback = config('payment-gateway.redirect_after_status_fallback_url', '');
+        if (empty($fallback)) {
+            $fallback = url('/');
+        }
+
         if (empty($template)) {
-            return url('/');
+            return $fallback;
         }
 
         if (empty($transactionId)) {
-            return str_contains($template, '{order_id}') ? url('/') : $template;
+            return str_contains($template, '{order_id}') ? $fallback : $template;
         }
 
         $transaction = PaymentTransaction::find($transactionId);
         if (!$transaction || !$transaction->payable_id) {
-            return str_contains($template, '{order_id}') ? url('/') : $template;
+            return str_contains($template, '{order_id}') ? $fallback : $template;
         }
 
         return str_replace('{order_id}', (string) $transaction->payable_id, $template);

@@ -20,7 +20,7 @@ class PaymentCallbackController extends Controller
 
     /**
      * Handle incoming callback requests from payment gateways (GET for user redirect, POST for server).
-     * Always redirects the user to a status page (package Blade when redirect_after_status_url is set); never returns JSON.
+     * Always redirects the user to the package status Blade (public route) by default; never returns JSON.
      *
      * @param Request $request
      * @param string $gateway
@@ -53,8 +53,8 @@ class PaymentCallbackController extends Controller
     }
 
     /**
-     * Build redirect URL. When redirect_after_status_url is set, redirect to package status Blade (with transaction_id
-     * and order id in the Blade's redirect URL). Otherwise use gateway redirect_*_url, fallback, or app root.
+     * Build redirect URL. Default: redirect to package status Blade (public route) with transaction_id.
+     * Only use gateway redirect_*_url or fallback when package status route is not available.
      */
     protected function getRedirectUrl(string $gateway, array $result): string
     {
@@ -66,21 +66,14 @@ class PaymentCallbackController extends Controller
         }
 
         $transactionId = $result['transaction_id'] ?? null;
-        $usePackageBlade = !empty(config('payment-gateway.redirect_after_status_url'));
 
-        if ($usePackageBlade && $transactionId !== null && Route::has('payment-gateway.status')) {
-            return route('payment-gateway.status', [
-                'status' => $status,
-                'transaction_id' => $transactionId,
-                'gateway' => $gateway,
-            ]);
-        }
-
-        if ($usePackageBlade && Route::has('payment-gateway.status')) {
-            return route('payment-gateway.status', [
-                'status' => $status,
-                'gateway' => $gateway,
-            ]);
+        // Default: use package Blade (public status page)
+        if (Route::has('payment-gateway.status')) {
+            $params = ['status' => $status, 'gateway' => $gateway];
+            if ($transactionId !== null) {
+                $params['transaction_id'] = $transactionId;
+            }
+            return route('payment-gateway.status', $params);
         }
 
         $configKey = match ($status) {

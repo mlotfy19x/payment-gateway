@@ -41,6 +41,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Fallback redirect when redirect_after_status_url is not set
+    |--------------------------------------------------------------------------
+    |
+    | When redirect_after_status_url is empty, the Blade redirects here after 5s.
+    | Use a public route (e.g. dashboard, home). Avoid auth/login routes.
+    | Leave empty to use the application root (url('/')).
+    |
+    */
+
+    'redirect_after_status_fallback_url' => env('PAYMENT_REDIRECT_AFTER_STATUS_FALLBACK_URL', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Payment Transaction Configuration
     |--------------------------------------------------------------------------
     |
