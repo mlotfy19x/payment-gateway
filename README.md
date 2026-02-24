@@ -136,7 +136,7 @@ TAMARA_REDIRECT_CANCEL_URL=https://yourdomain.com/payment-status/cancel/ar
 **Callback vs redirect URLs**
 
 - **TABBY_SUCCESS_URL / TAMARA_SUCCESS_URL (and failure/cancel):** Must point to **this project’s** callback route so the package can process the payment. Use the package route, e.g. `https://yourdomain.com/payment/callback/tabby` (same idea for Tamara). The gateway redirects the user here after payment; the package then processes the result and redirects the user again.
-- **TABBY_REDIRECT_* / TAMARA_REDIRECT_*:** Where to send the user **after** the package has processed the callback (e.g. your `payment-status/{status}/{language}` page or frontend URL). If set, the callback returns a redirect to this URL instead of JSON.
+- **TABBY_REDIRECT_* / TAMARA_REDIRECT_*:** Where to send the user **after** the package has processed the callback (e.g. your `payment-status/{status}/{language}` Blade page). The callback always redirects (never returns JSON); if these are not set, it uses `PAYMENT_REDIRECT_FALLBACK_URL` or the app root.
 
 ## Configuration Files
 
@@ -150,6 +150,12 @@ This is the main configuration file for the package:
 return [
     // Default payment gateway to use when not specified
     'default_gateway' => env('PAYMENT_DEFAULT_GATEWAY', 'tabby'),
+
+    // Fallback URL when gateway-specific redirect_*_url are not set (callback appends ?status=...&gateway=...)
+    'redirect_fallback_url' => env('PAYMENT_REDIRECT_FALLBACK_URL', ''),
+
+    // URL the user is sent to after the package status Blade (success/error/cancel). Use {order_id} placeholder; replaced by payable_id (e.g. order id). When set, callback redirects to package Blade first.
+    'redirect_after_status_url' => env('PAYMENT_REDIRECT_AFTER_STATUS_URL', ''),
 
     // Callbacks configuration for payment events
     'callbacks' => [
@@ -174,6 +180,10 @@ return [
 **Configuration Options:**
 
 - **`default_gateway`**: The default payment gateway to use when not explicitly specified. Options: `'tabby'` or `'tamara'`.
+
+- **`redirect_fallback_url`**: When a gateway-specific `redirect_success_url` / `redirect_error_url` / `redirect_cancel_url` is not set, the callback redirects here with `?status=...&gateway=...`. Leave empty to fall back to the app root.
+
+- **`redirect_after_status_url`**: When set, the callback redirects to the **package status page** (Blade: success / error / cancel). The Blade shows a message and then redirects the user to this URL. Use the placeholder `{order_id}` in the URL; it is replaced by the payable id (e.g. order id). Example: `https://yourdomain.com/orders/{order_id}`. Set in `.env` as `PAYMENT_REDIRECT_AFTER_STATUS_URL`.
 
 - **`transaction`**: Configuration for payment transactions:
   - `table`: Database table name for storing payment transactions.
@@ -364,14 +374,16 @@ return redirect($paymentInfo['url']);
 
 **Important:** You must call `PaymentGateway::recordTransaction(...)` (or create a row with the package’s `PaymentTransaction` model) **after** `initiatePayment` and **before** redirecting the user to the gateway. Otherwise the callback/webhook will not find a transaction to update.
 
-### Callback flow (same project, redirect like webhook)
+### Callback flow: always redirect to your Blade (never JSON)
 
 The package callback (`GET` or `POST` to `payment/callback/{gateway}`) uses the same “pay or not” logic as the webhook: it finds the transaction by `track_id`/`payment_id`, updates status, and fires events. The only difference is the **response**:
 
 - If `redirect_success_url` / `redirect_error_url` / `redirect_cancel_url` are set in config, the callback **redirects** the user to the matching URL (with `?status=...&gateway=...`). This matches the usual “return from gateway → process → show success/error/cancel page” flow.
-- If those redirect URLs are not set, the callback returns JSON (for backward compatibility).
+- The callback **always** redirects (never returns JSON). If gateway-specific redirect URLs are not set, it uses `payment-gateway.redirect_fallback_url`, or the app root with `?status=...&gateway=...`.
 
-You can use your existing `payment-status/{status}/{language}` routes as the redirect URLs so the behaviour stays the same as in your main project.
+**Package status Blade (with order id in redirect URL):** Set `PAYMENT_REDIRECT_AFTER_STATUS_URL` in `.env` (e.g. `https://yourdomain.com/orders/{order_id}`). The callback will then redirect to the **package** status page (`payment-gateway/status/{status}`). The package serves Blade views (success / error / cancel) that show a message and, after 5 seconds, redirect the user to the URL from config with `{order_id}` replaced by the payable id (e.g. your order id). This matches the current project behaviour: one Blade per status and a redirect URL that includes the order id.
+
+Alternatively, set the three per-gateway redirect URLs to your own Blade routes, or set `redirect_fallback_url` to one route that reads `status` and `gateway` from the query. The **webhook** endpoint is unchanged (returns 200, no redirect).
 
 ### Using Builder Pattern
 
@@ -764,7 +776,7 @@ The package handles payment results in two ways: **callback** (when the user is 
    - `TABBY_REDIRECT_SUCCESS_URL`, `TABBY_REDIRECT_FAILURE_URL`, `TABBY_REDIRECT_CANCEL_URL`
    - `TAMARA_REDIRECT_SUCCESS_URL`, etc.  
    Example: `https://yourdomain.com/payment-status/success/ar`.  
-   If these are set, the callback **redirects** the user to the right URL (with `?status=...&gateway=...`). If not set, the callback returns JSON.
+   The callback **always** redirects (never returns JSON). If these are not set, it uses `PAYMENT_REDIRECT_FALLBACK_URL` or the app root with `?status=...&gateway=...`.
 
 4. **Flow**  
    User finishes on gateway → gateway redirects to `GET /payment/callback/{gateway}` (with query params) → package runs `HandlePaymentAction`, updates `PaymentTransaction`, fires events → package redirects to your redirect_success_url / redirect_error_url / redirect_cancel_url.
@@ -835,7 +847,8 @@ Event::listen(PaymentCancelled::class, function (PaymentCancelled $event) {
 
 The package automatically registers:
 
-- `GET|POST /payment/callback/{gateway}` – Callback: user redirect from gateway; redirects to redirect_*_url when configured.
+- `GET|POST /payment/callback/{gateway}` – Callback: user redirect from gateway; redirects to package status Blade (when `redirect_after_status_url` is set) or to redirect_*_url / fallback / app root.
+- `GET /payment-gateway/status/{status}` – Package status page (Blade: success / error / cancel); redirect URL includes order id when `redirect_after_status_url` is set.
 - `POST /webhooks/payment/{gateway}` – Webhook: gateway server-to-server notification.
 
 ## Webhook Signature Verification

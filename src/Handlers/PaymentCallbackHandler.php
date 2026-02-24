@@ -40,10 +40,11 @@ class PaymentCallbackHandler
                 false // is_webhook = false for callbacks
             );
 
-            if ($result === true) {
+            if (is_array($result) && !empty($result['success'])) {
                 return [
                     'success' => true,
                     'message' => 'Payment processed successfully',
+                    'transaction_id' => $result['transaction_id'] ?? null,
                 ];
             }
 
@@ -52,12 +53,14 @@ class PaymentCallbackHandler
                     'success' => false,
                     'status' => 'cancel',
                     'message' => $result['message'] ?? 'Payment was cancelled',
+                    'transaction_id' => $result['transaction_id'] ?? null,
                 ];
             }
 
             return [
                 'success' => false,
-                'message' => 'Payment processing failed',
+                'message' => is_array($result) ? ($result['message'] ?? 'Payment processing failed') : 'Payment processing failed',
+                'transaction_id' => is_array($result) ? ($result['transaction_id'] ?? null) : null,
             ];
 
         } catch (\Exception $e) {

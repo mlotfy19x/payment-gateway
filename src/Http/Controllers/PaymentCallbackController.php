@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Route;
 use MLQuarizm\PaymentGateway\Handlers\PaymentCallbackHandler;
 
 class PaymentCallbackController extends Controller
@@ -19,13 +20,13 @@ class PaymentCallbackController extends Controller
 
     /**
      * Handle incoming callback requests from payment gateways (GET for user redirect, POST for server).
-     * When redirect_*_url are configured, redirects the user to the appropriate status page; otherwise returns JSON.
+     * Always redirects the user to a status page (package Blade when redirect_after_status_url is set); never returns JSON.
      *
      * @param Request $request
      * @param string $gateway
-     * @return \Illuminate\Http\JsonResponse|RedirectResponse
+     * @return RedirectResponse
      */
-    public function handle(Request $request, string $gateway)
+    public function handle(Request $request, string $gateway): RedirectResponse
     {
         Log::info("Callback Received from {$gateway}", [
             'headers' => $request->headers->all(),
@@ -39,22 +40,7 @@ class PaymentCallbackController extends Controller
             );
 
             $redirectUrl = $this->getRedirectUrl($gateway, $result);
-            if ($redirectUrl !== null) {
-                return redirect()->to($redirectUrl);
-            }
-
-            if ($result['success']) {
-                return response()->json([
-                    'message' => 'Callback handled successfully',
-                    'data' => $result
-                ], 200);
-            }
-
-            return response()->json([
-                'message' => $result['message'] ?? 'Callback processing failed',
-                'data' => $result
-            ], 200);
-
+            return redirect()->to($redirectUrl);
         } catch (\Exception $e) {
             Log::error("Callback Handling Error: " . $e->getMessage(), [
                 'gateway' => $gateway,
@@ -62,28 +48,39 @@ class PaymentCallbackController extends Controller
             ]);
 
             $redirectUrl = $this->getRedirectUrl($gateway, ['success' => false, 'status' => 'error']);
-            if ($redirectUrl !== null) {
-                return redirect()->to($redirectUrl);
-            }
-
-            return response()->json([
-                'message' => 'Error processed',
-                'error' => $e->getMessage()
-            ], 200);
+            return redirect()->to($redirectUrl);
         }
     }
 
     /**
-     * Get redirect URL from config based on result (success / cancel / failure).
-     * Returns null if no redirect URL is configured.
+     * Build redirect URL. When redirect_after_status_url is set, redirect to package status Blade (with transaction_id
+     * and order id in the Blade's redirect URL). Otherwise use gateway redirect_*_url, fallback, or app root.
      */
-    protected function getRedirectUrl(string $gateway, array $result): ?string
+    protected function getRedirectUrl(string $gateway, array $result): string
     {
         $status = 'error';
         if (!empty($result['success'])) {
             $status = 'success';
         } elseif (isset($result['status']) && $result['status'] === 'cancel') {
             $status = 'cancel';
+        }
+
+        $transactionId = $result['transaction_id'] ?? null;
+        $usePackageBlade = !empty(config('payment-gateway.redirect_after_status_url'));
+
+        if ($usePackageBlade && $transactionId !== null && Route::has('payment-gateway.status')) {
+            return route('payment-gateway.status', [
+                'status' => $status,
+                'transaction_id' => $transactionId,
+                'gateway' => $gateway,
+            ]);
+        }
+
+        if ($usePackageBlade && Route::has('payment-gateway.status')) {
+            return route('payment-gateway.status', [
+                'status' => $status,
+                'gateway' => $gateway,
+            ]);
         }
 
         $configKey = match ($status) {
@@ -94,7 +91,10 @@ class PaymentCallbackController extends Controller
 
         $url = config("{$gateway}.{$configKey}");
         if (empty($url)) {
-            return null;
+            $url = config('payment-gateway.redirect_fallback_url', '');
+        }
+        if (empty($url)) {
+            $url = url('/');
         }
 
         $separator = str_contains($url, '?') ? '&' : '?';

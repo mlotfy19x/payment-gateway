@@ -55,4 +55,4 @@ composer require mlquarizm/payment-gateway
 
 - بعد استدعاء `initiatePayment` استدعِ `PaymentGateway::recordTransaction($order, $trackId, $paymentId, $gateway, $amount, $paymentInfo)` ثم وجّه المستخدم لرابط الدفع.
 - في إعدادات Tabby/Tamara: `success_url` / `failure_url` / `cancel_url` يجب أن تشير إلى **نفس المشروع** (رابط الـ callback الخاص بالـ package، مثلاً `https://yourdomain.com/payment/callback/tabby`).
-- إعدادات `redirect_success_url` / `redirect_error_url` / `redirect_cancel_url` يمكن أن تكون نفس روابط صفحة الحالة في المشروع (مثلاً `payment-status/{status}/{language}`).
+- إعدادات `redirect_success_url` / `redirect_error_url` / `redirect_cancel_url` يمكن أن تكون نفس روابط صفحة الحالة في المشروع (مثلاً `payment-status/{status}/{language}`). الـ callback **دائماً** يعمل redirect (لا يرجع JSON). لو لم تضبط هذه الروابط، استخدم `PAYMENT_REDIRECT_FALLBACK_URL` في `.env` أو سيتم التوجيه لرابط الجذر مع `?status=...&gateway=...`. الـ webhook يبقى كما هو (يرجع 200 بدون redirect).

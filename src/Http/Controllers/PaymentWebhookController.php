@@ -56,7 +56,8 @@ class PaymentWebhookController extends Controller
                 true // is_webhook = true
             );
 
-            if ($result) {
+            $success = $result === true || (is_array($result) && !empty($result['success']));
+            if ($success) {
                 return response()->json(['message' => 'Webhook handled successfully'], 200);
             }
 

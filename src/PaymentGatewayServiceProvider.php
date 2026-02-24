@@ -37,6 +37,9 @@ class PaymentGatewayServiceProvider extends ServiceProvider
         // Load routes
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
 
+        // Load package views (Blade: success, error, cancel)
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'payment-gateway');
+
         // Merge config
         $this->mergeConfigFrom(
             __DIR__ . '/../config/payment-gateway.php',

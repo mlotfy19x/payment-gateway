@@ -92,10 +92,11 @@ class HandlePaymentAction
             if (in_array($gateway, ['tabby', 'tamara']) && isset($parsedData['status']) && $parsedData['status'] === 'cancel') {
                 // Dispatch cancellation event
                 event(new PaymentCancelled($transaction));
-                
+
                 return [
                     'status' => 'cancel',
                     'message' => 'Payment was cancelled',
+                    'transaction_id' => $transaction->id,
                 ];
             }
 
@@ -103,7 +104,10 @@ class HandlePaymentAction
             $reason = $parsedData['status'] ?? 'Payment failed';
             event(new PaymentFailed($transaction, $reason));
 
-            return false;
+            return [
+                'success' => false,
+                'transaction_id' => $transaction->id,
+            ];
         }
 
         // 5. Handle Success
@@ -115,7 +119,10 @@ class HandlePaymentAction
         // Dispatch success event
         event(new PaymentSuccess($transaction));
 
-        return true;
+        return [
+            'success' => true,
+            'transaction_id' => $transaction->id,
+        ];
     }
 
     /**
