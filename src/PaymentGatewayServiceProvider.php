@@ -2,6 +2,7 @@
 
 namespace MLQuarizm\PaymentGateway;
 
+use MLQuarizm\PaymentGateway\Services\PaymentGatewayService;
 use Illuminate\Support\ServiceProvider;
 
 class PaymentGatewayServiceProvider extends ServiceProvider
@@ -11,7 +12,9 @@ class PaymentGatewayServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register bindings if needed
+        $this->app->singleton(PaymentGatewayService::class, function ($app) {
+            return new PaymentGatewayService();
+        });
     }
 
     /**

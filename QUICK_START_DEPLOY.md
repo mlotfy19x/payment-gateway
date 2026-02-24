@@ -50,3 +50,9 @@ composer require mlquarizm/payment-gateway
 - ✅ استبدل `your-org/ml-payment-gateway` برابط الـ repository الفعلي
 - ✅ استبدل `info@ml.com` بالإيميل الصحيح في `composer.json`
 - ✅ استبدل `homepage` و `support` في `composer.json` بروابطك
+
+## بعد التثبيت في المشروع
+
+- بعد استدعاء `initiatePayment` استدعِ `PaymentGateway::recordTransaction($order, $trackId, $paymentId, $gateway, $amount, $paymentInfo)` ثم وجّه المستخدم لرابط الدفع.
+- في إعدادات Tabby/Tamara: `success_url` / `failure_url` / `cancel_url` يجب أن تشير إلى **نفس المشروع** (رابط الـ callback الخاص بالـ package، مثلاً `https://yourdomain.com/payment/callback/tabby`).
+- إعدادات `redirect_success_url` / `redirect_error_url` / `redirect_cancel_url` يمكن أن تكون نفس روابط صفحة الحالة في المشروع (مثلاً `payment-status/{status}/{language}`).

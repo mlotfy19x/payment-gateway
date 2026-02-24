@@ -13,8 +13,8 @@ use MLQuarizm\PaymentGateway\Http\Controllers\PaymentWebhookController;
 |
 */
 
-// Payment Callbacks (unified endpoint)
-Route::post('payment/callback/{gateway}', [PaymentCallbackController::class, 'handle'])
+// Payment Callbacks (unified endpoint; GET for user redirect from gateway, POST for server callbacks)
+Route::match(['get', 'post'], 'payment/callback/{gateway}', [PaymentCallbackController::class, 'handle'])
     ->name('payment.callback');
 
 // Payment Webhooks

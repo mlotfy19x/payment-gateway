@@ -123,7 +123,20 @@ TAMARA_NOTIFICATION_TOKEN=your_notification_token
 TAMARA_SUCCESS_URL=https://yourdomain.com/payment/callback/tamara?status=success
 TAMARA_FAILURE_URL=https://yourdomain.com/payment/callback/tamara?status=failure
 TAMARA_CANCEL_URL=https://yourdomain.com/payment/callback/tamara?status=cancel
+
+# Redirect URLs (where the user lands after we process the callback; e.g. your app's status page)
+TABBY_REDIRECT_SUCCESS_URL=https://yourdomain.com/payment-status/success/ar
+TABBY_REDIRECT_FAILURE_URL=https://yourdomain.com/payment-status/error/ar
+TABBY_REDIRECT_CANCEL_URL=https://yourdomain.com/payment-status/cancel/ar
+TAMARA_REDIRECT_SUCCESS_URL=https://yourdomain.com/payment-status/success/ar
+TAMARA_REDIRECT_FAILURE_URL=https://yourdomain.com/payment-status/error/ar
+TAMARA_REDIRECT_CANCEL_URL=https://yourdomain.com/payment-status/cancel/ar
 ```
+
+**Callback vs redirect URLs**
+
+- **TABBY_SUCCESS_URL / TAMARA_SUCCESS_URL (and failure/cancel):** Must point to **this project’s** callback route so the package can process the payment. Use the package route, e.g. `https://yourdomain.com/payment/callback/tabby` (same idea for Tamara). The gateway redirects the user here after payment; the package then processes the result and redirects the user again.
+- **TABBY_REDIRECT_* / TAMARA_REDIRECT_*:** Where to send the user **after** the package has processed the callback (e.g. your `payment-status/{status}/{language}` page or frontend URL). If set, the callback returns a redirect to this URL instead of JSON.
 
 ## Configuration Files
 
@@ -292,8 +305,6 @@ use MLQuarizm\PaymentGateway\DTOs\PaymentOrderDTO;
 use MLQuarizm\PaymentGateway\DTOs\BuyerDTO;
 use MLQuarizm\PaymentGateway\DTOs\AddressDTO;
 use MLQuarizm\PaymentGateway\DTOs\OrderItemDTO;
-use MLQuarizm\PaymentGateway\Models\PaymentTransaction;
-
 // Build DTOs
 $orderDTO = new PaymentOrderDTO(
     id: $order->id,
@@ -336,21 +347,31 @@ $factory = new PaymentGatewayFactory();
 $gateway = $factory->make('tabby');
 $paymentInfo = $gateway->initiatePayment($tabbyDTO);
 
-// Create transaction record
-PaymentTransaction::create([
-    'payable_type' => Order::class,
-    'payable_id' => $order->id,
-    'track_id' => (string) $order->id,
-    'payment_id' => $paymentInfo['payment_id'],
-    'payment_gateway' => 'tabby',
-    'amount' => 500.00,
-    'status' => 'pending',
-    'response' => $paymentInfo,
-]);
+// Record the transaction so callback/webhook can find and update it (required)
+use MLQuarizm\PaymentGateway\Facades\PaymentGateway;
+PaymentGateway::recordTransaction(
+    $order,
+    (string) $order->id,
+    $paymentInfo['payment_id'] ?? null,
+    'tabby',
+    500.00,
+    $paymentInfo
+);
 
 // Redirect to payment URL
 return redirect($paymentInfo['url']);
 ```
+
+**Important:** You must call `PaymentGateway::recordTransaction(...)` (or create a row with the package’s `PaymentTransaction` model) **after** `initiatePayment` and **before** redirecting the user to the gateway. Otherwise the callback/webhook will not find a transaction to update.
+
+### Callback flow (same project, redirect like webhook)
+
+The package callback (`GET` or `POST` to `payment/callback/{gateway}`) uses the same “pay or not” logic as the webhook: it finds the transaction by `track_id`/`payment_id`, updates status, and fires events. The only difference is the **response**:
+
+- If `redirect_success_url` / `redirect_error_url` / `redirect_cancel_url` are set in config, the callback **redirects** the user to the matching URL (with `?status=...&gateway=...`). This matches the usual “return from gateway → process → show success/error/cancel page” flow.
+- If those redirect URLs are not set, the callback returns JSON (for backward compatibility).
+
+You can use your existing `payment-status/{status}/{language}` routes as the redirect URLs so the behaviour stays the same as in your main project.
 
 ### Using Builder Pattern
 
@@ -525,6 +546,10 @@ $tamaraDTO = TamaraPaymentDTOBuilder::new()
 $factory = new PaymentGatewayFactory();
 $gateway = $factory->make('tamara');
 $paymentInfo = $gateway->initiatePayment($tamaraDTO);
+
+// Record the transaction and redirect (same as Tabby)
+PaymentGateway::recordTransaction($order, (string) $order->id, $paymentInfo['payment_id'] ?? null, 'tamara', 500.00, $paymentInfo);
+return redirect($paymentInfo['url']);
 ```
 
 #### Multiple Items
@@ -708,12 +733,110 @@ public function boot(): void
 }
 ```
 
+## How to Use Callback and Webhook
+
+The package handles payment results in two ways: **callback** (when the user is sent back to your site after paying) and **webhook** (when the gateway sends a server-to-server request). Both use the same logic to update the transaction and fire events; only the entry point and response differ.
+
+### Callback (user redirect)
+
+**What it is:** After the user completes or cancels payment on Tabby/Tamara, the gateway redirects the user to a URL you provide. That URL must be your app so the package can process the result and then send the user to your success/error/cancel page.
+
+**How to use it:**
+
+1. **Register the callback URL with the gateway**  
+   In Tabby/Tamara merchant settings (and in your `.env`), set:
+   - Success URL: `https://yourdomain.com/payment/callback/tabby` (or `.../payment/callback/tamara`)
+   - Failure URL: same path
+   - Cancel URL: same path  
+   The package uses one route and decides success/failure/cancel from the request data.
+
+2. **Exclude the callback from CSRF**  
+   In `app/Http/Middleware/VerifyCsrfToken.php` add:
+   ```php
+   protected $except = [
+       'payment/callback/*',
+       'webhooks/payment/*',
+   ];
+   ```
+
+3. **Set redirect URLs in config**  
+   So the user is sent to your status page after processing, set in `.env` (or config):
+   - `TABBY_REDIRECT_SUCCESS_URL`, `TABBY_REDIRECT_FAILURE_URL`, `TABBY_REDIRECT_CANCEL_URL`
+   - `TAMARA_REDIRECT_SUCCESS_URL`, etc.  
+   Example: `https://yourdomain.com/payment-status/success/ar`.  
+   If these are set, the callback **redirects** the user to the right URL (with `?status=...&gateway=...`). If not set, the callback returns JSON.
+
+4. **Flow**  
+   User finishes on gateway → gateway redirects to `GET /payment/callback/{gateway}` (with query params) → package runs `HandlePaymentAction`, updates `PaymentTransaction`, fires events → package redirects to your redirect_success_url / redirect_error_url / redirect_cancel_url.
+
+**Route:** `GET|POST /payment/callback/{gateway}` (e.g. `payment/callback/tabby`, `payment/callback/tamara`).
+
+### Webhook (server-to-server)
+
+**What it is:** Tabby/Tamara send an HTTP POST to your server to notify payment status. No user is in the browser; the gateway calls your URL directly.
+
+**How to use it:**
+
+1. **Register the webhook URL with the gateway**  
+   In Tabby/Tamara merchant/dashboard settings, set the webhook URL to:
+   - `https://yourdomain.com/webhooks/payment/tabby`
+   - `https://yourdomain.com/webhooks/payment/tamara`
+
+2. **Exclude the webhook from CSRF**  
+   Same as above: add `webhooks/payment/*` to `VerifyCsrfToken::$except`.
+
+3. **Configure verification (recommended)**  
+   - **Tamara:** set `TAMARA_NOTIFICATION_TOKEN` in `.env`; the package verifies the JWT.
+   - **Tabby:** set `TABBY_SECRET_KEY` and optionally `TABBY_WEBHOOK_VERIFY_SIGNATURE=true` for HMAC verification.
+
+4. **Flow**  
+   Gateway sends `POST /webhooks/payment/{gateway}` → package verifies signature/token → runs same `HandlePaymentAction`, updates transaction, fires same events → returns 200 so the gateway does not retry.
+
+**Route:** `POST /webhooks/payment/{gateway}`.
+
+### Summary: callback vs webhook
+
+| | Callback | Webhook |
+|---|----------|--------|
+| **Who calls** | User’s browser (redirect from gateway) | Gateway’s server |
+| **Method** | GET (or POST) | POST |
+| **Route** | `/payment/callback/{gateway}` | `/webhooks/payment/{gateway}` |
+| **Response** | Redirect to your redirect_*_url or JSON | Always 200 (body not used by gateway) |
+| **Logic** | Same: find transaction, update status, fire events | Same |
+
+### Reacting to payment result (both callback and webhook)
+
+Listen to package events; they are fired for both callback and webhook:
+
+```php
+use Illuminate\Support\Facades\Event;
+use MLQuarizm\PaymentGateway\Events\PaymentSuccess;
+use MLQuarizm\PaymentGateway\Events\PaymentFailed;
+use MLQuarizm\PaymentGateway\Events\PaymentCancelled;
+use MLQuarizm\PaymentGateway\Events\PaymentPending;
+
+// In a service provider or dedicated listener class
+Event::listen(PaymentSuccess::class, function (PaymentSuccess $event) {
+    $transaction = $event->transaction;
+    // Update order, send notification, etc.
+});
+
+Event::listen(PaymentFailed::class, function (PaymentFailed $event) {
+    $transaction = $event->transaction;
+    $reason = $event->reason;
+});
+
+Event::listen(PaymentCancelled::class, function (PaymentCancelled $event) {
+    $transaction = $event->transaction;
+});
+```
+
 ## Routes
 
-The package automatically registers the following routes:
+The package automatically registers:
 
-- `POST /payment/callback/{gateway}` - Unified callback endpoint
-- `POST /webhooks/payment/{gateway}` - Webhook endpoint
+- `GET|POST /payment/callback/{gateway}` – Callback: user redirect from gateway; redirects to redirect_*_url when configured.
+- `POST /webhooks/payment/{gateway}` – Webhook: gateway server-to-server notification.
 
 ## Webhook Signature Verification
 
