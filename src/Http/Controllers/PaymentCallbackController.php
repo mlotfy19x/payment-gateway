@@ -39,7 +39,20 @@ class PaymentCallbackController extends Controller
                 $gateway
             );
 
-            $redirectUrl = $this->getRedirectUrl($gateway, $result);
+            try {
+                $redirectUrl = $this->getRedirectUrl($gateway, $result);
+            } catch (\Throwable $e) {
+                Log::error('PaymentCallbackController getRedirectUrl failed', [
+                    'gateway' => $gateway,
+                    'result' => $result,
+                    'message' => $e->getMessage(),
+                    'exception' => get_class($e),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ]);
+                $redirectUrl = $this->getRedirectUrlSafe($gateway);
+            }
+
             return redirect()->to($redirectUrl);
         } catch (\Exception $e) {
             Log::error("Callback Handling Error: " . $e->getMessage(), [
@@ -47,7 +60,17 @@ class PaymentCallbackController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            $redirectUrl = $this->getRedirectUrl($gateway, ['success' => false, 'status' => 'error']);
+            try {
+                $redirectUrl = $this->getRedirectUrl($gateway, ['success' => false, 'status' => 'error']);
+            } catch (\Throwable $redirectEx) {
+                Log::error('PaymentCallbackController getRedirectUrl failed (after handler exception)', [
+                    'gateway' => $gateway,
+                    'message' => $redirectEx->getMessage(),
+                    'exception' => get_class($redirectEx),
+                ]);
+                $redirectUrl = $this->getRedirectUrlSafe($gateway);
+            }
+
             return redirect()->to($redirectUrl);
         }
     }
@@ -99,5 +122,24 @@ class PaymentCallbackController extends Controller
         ]);
 
         return $url;
+    }
+
+    /**
+     * Fallback when getRedirectUrl throws. Returns status error page or home so redirect never fails.
+     */
+    protected function getRedirectUrlSafe(string $gateway): string
+    {
+        try {
+            if (Route::has('payment-gateway.status')) {
+                $url = route('payment-gateway.status', ['status' => 'error', 'gateway' => $gateway]);
+                return $url . (str_contains($url, '?') ? '&' : '?') . 'status=error';
+            }
+        } catch (\Throwable $e) {
+            Log::warning('PaymentCallbackController getRedirectUrlSafe route failed', [
+                'gateway' => $gateway,
+                'message' => $e->getMessage(),
+            ]);
+        }
+        return url('/') . '?status=error&gateway=' . rawurlencode($gateway);
     }
 }
