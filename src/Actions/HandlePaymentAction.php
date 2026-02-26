@@ -43,20 +43,21 @@ class HandlePaymentAction
         $orderReference = $parsedData['order_reference'];
         $isSuccess = $parsedData['is_success'];
 
-        // 2. Find the transaction (allow retrying failed transactions)
+        // 2. Find the transaction (include SUCCESS so callback after webhook / double redirect still shows success page)
         $transaction = PaymentTransaction::query()
             ->where(function ($query) use ($transactionId, $orderReference) {
-                // Search by our internal Track ID (Reference) if available
                 if ($orderReference) {
                     $query->where('track_id', $orderReference);
-                }
-                // Fallback to searching by Gateway Payment ID if available
-                elseif ($transactionId) {
+                } elseif ($transactionId) {
                     $query->where('payment_id', $transactionId);
                 }
             })
             ->where('payment_gateway', $gateway)
-            ->whereIn('status', [PaymentStatusEnum::PENDING->value, PaymentStatusEnum::FAILED->value])
+            ->whereIn('status', [
+                PaymentStatusEnum::PENDING->value,
+                PaymentStatusEnum::FAILED->value,
+                PaymentStatusEnum::SUCCESS->value,
+            ])
             ->first();
 
         // 3. Update Payment ID if it was missing
@@ -110,14 +111,15 @@ class HandlePaymentAction
             ];
         }
 
-        // 5. Handle Success
-        $transaction->update([
-            'status' => PaymentStatusEnum::SUCCESS,
-            'response' => $data,
-        ]);
-
-        // Dispatch success event
-        event(new PaymentSuccess($transaction));
+        // 5. Handle Success (idempotent: if already SUCCESS e.g. from webhook, just return success for redirect)
+        $alreadySuccess = $transaction->status === PaymentStatusEnum::SUCCESS->value;
+        if (!$alreadySuccess) {
+            $transaction->update([
+                'status' => PaymentStatusEnum::SUCCESS,
+                'response' => $data,
+            ]);
+            event(new PaymentSuccess($transaction));
+        }
 
         return [
             'success' => true,
