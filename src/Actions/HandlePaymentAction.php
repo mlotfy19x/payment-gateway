@@ -231,6 +231,15 @@ class HandlePaymentAction
             ->first();
 
         if (!$transaction) {
+            $orderReferenceId = Arr::get($data, 'order_reference_id');
+            if ($orderReferenceId) {
+                $transaction = PaymentTransaction::where('track_id', $orderReferenceId)
+                    ->where('payment_gateway', 'tamara')
+                    ->first();
+            }
+        }
+
+        if (!$transaction) {
             Log::warning('Tamara: No transaction found for orderId', ['orderId' => $orderId]);
             return [
                 'transaction_id' => $orderId,
