@@ -22,9 +22,6 @@
         <h2>{{ app()->getLocale() == 'ar' ? 'تم الدفع بنجاح' : 'Your payment was successful' }}</h2>
         @if(!empty($hasRedirect))
             <p>{{ app()->getLocale() == 'ar' ? 'سيتم توجيهك خلال 5 ثوانٍ.' : 'You will be redirected in 5 seconds.' }}</p>
-        @else
-            <p>{{ app()->getLocale() == 'ar' ? 'اضغط للعودة للرئيسية' : 'Click to go back' }}</p>
-            <a href="{!! $url !!}">{{ app()->getLocale() == 'ar' ? 'العودة للرئيسية' : 'Back to home' }}</a>
         @endif
     </div>
 </div>

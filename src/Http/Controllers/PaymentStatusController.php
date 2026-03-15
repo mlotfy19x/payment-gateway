@@ -24,6 +24,8 @@ class PaymentStatusController extends Controller
             'url' => $url,
             'hasRedirect' => $hasRedirect,
             'gateway' => $gateway,
+            'ar_message' => request('ar_message'),
+            'en_message' => request('en_message'),
         ]);
     }
 

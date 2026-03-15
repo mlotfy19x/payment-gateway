@@ -96,6 +96,18 @@ class PaymentCallbackController extends Controller
             if ($transactionId !== null) {
                 $params['transaction_id'] = $transactionId;
             }
+            if ($status === 'cancel') {
+                $params['ar_message'] = 'لقد ألغيت الدفعة. فضلاً حاول مجددًا أو اختر طريقة دفع أخرى';
+                $params['en_message'] = 'You aborted the payment. Please retry or choose another payment method.';
+            }
+            if ($status === 'error') {
+                $params['ar_message'] = $gateway === 'tabby'
+                    ? 'نأسف، تابي غير قادرة على الموافقة على هذه العملية. الرجاء استخدام طريقة دفع أخرى.'
+                    : 'حدث خطأ أثناء معالجة الدفع. الرجاء المحاولة مرة أخرى أو اختيار طريقة دفع أخرى.';
+                $params['en_message'] = $gateway === 'tabby'
+                    ? 'Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order'
+                    : 'An error occurred while processing the payment. Please try again or choose another payment method.';
+            }
             $url = route('payment-gateway.status', $params);
             $separator = str_contains($url, '?') ? '&' : '?';
             return $url . $separator . 'status=' . rawurlencode($status);

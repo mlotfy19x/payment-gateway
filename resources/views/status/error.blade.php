@@ -20,11 +20,9 @@
     <div class="message-box _failed">
         <i class="fa fa-times-circle" aria-hidden="true"></i>
         <h2>{{ app()->getLocale() == 'ar' ? 'فشل الدفع' : 'Your payment failed' }}</h2>
-        <p>{{ app()->getLocale() == 'ar' ? 'يرجى المحاولة مرة أخرى لاحقًا' : 'Try again later.' }}</p>
+        <p>{{ app()->getLocale() == 'ar' ? ($ar_message ?? 'يرجى المحاولة مرة أخرى لاحقًا') : ($en_message ?? 'Try again later.') }}</p>
         @if(!empty($hasRedirect))
             <p>{{ app()->getLocale() == 'ar' ? 'سيتم توجيهك خلال 5 ثوانٍ.' : 'You will be redirected in 5 seconds.' }}</p>
-        @else
-            <a href="{!! $url !!}">{{ app()->getLocale() == 'ar' ? 'العودة للرئيسية' : 'Back to home' }}</a>
         @endif
     </div>
 </div>

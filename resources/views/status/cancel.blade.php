@@ -20,11 +20,9 @@
     <div class="message-box _cancelled">
         <i class="fa fa-times-circle" aria-hidden="true"></i>
         <h2>{{ app()->getLocale() == 'ar' ? 'تم إلغاء الدفع' : 'Payment Cancelled' }}</h2>
-        <p>{{ app()->getLocale() == 'ar' ? 'لقد تم إلغاء عملية الدفع' : 'Your payment has been cancelled.' }}</p>
+        <p>{{ app()->getLocale() == 'ar' ? ($ar_message ?? 'لقد تم إلغاء عملية الدفع') : ($en_message ?? 'Your payment has been cancelled.') }}</p>
         @if(!empty($hasRedirect))
             <p>{{ app()->getLocale() == 'ar' ? 'سيتم توجيهك خلال 5 ثوانٍ.' : 'You will be redirected in 5 seconds.' }}</p>
-        @else
-            <a href="{!! $url !!}">{{ app()->getLocale() == 'ar' ? 'العودة للرئيسية' : 'Back to home' }}</a>
         @endif
     </div>
 </div>
