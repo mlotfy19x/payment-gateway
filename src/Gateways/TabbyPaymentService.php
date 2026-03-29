@@ -131,16 +131,21 @@ class TabbyPaymentService implements PaymentGatewayInterface
 
     private function buildPaymentData(TabbyPaymentDTO $dto): array
     {
-        return [
+        $data = [
             'amount' => $this->formatAmount($dto->order->amount),
             'currency' => config('tabby.currency', self::DEFAULT_CURRENCY),
             'description' => $dto->order->description,
             'buyer' => $this->buildBuyerData($dto->buyer),
-            'shipping_address' => $this->buildShippingAddress($dto->shippingAddress),
             'order' => $this->buildOrderData($dto->order, $dto->items),
             'order_history' => $this->buildOrderHistory($dto->orderHistory),
             'buyer_history' => $this->buildBuyerHistory($dto->buyerHistory),
         ];
+
+        if ($dto->shippingAddress !== null) {
+            $data['shipping_address'] = $this->buildShippingAddress($dto->shippingAddress);
+        }
+
+        return $data;
     }
 
     private function buildBuyerData(BuyerDTO $buyer): array
@@ -188,12 +193,8 @@ class TabbyPaymentService implements PaymentGatewayInterface
         }, $items);
     }
 
-    private function buildBuyerHistory(?BuyerHistoryDTO $history): ?array
+    private function buildBuyerHistory(BuyerHistoryDTO $history): array
     {
-        if ($history === null) {
-            return null;
-        }
-
         return [
             'registered_since' => $history->registeredSince,
             'loyalty_level' => $history->loyaltyLevel,
@@ -202,13 +203,19 @@ class TabbyPaymentService implements PaymentGatewayInterface
         ];
     }
 
-    private function buildOrderHistory(?array $orderHistory): array
+    private function buildOrderHistory(array $orderHistory): array
     {
-        if ($orderHistory === null || empty($orderHistory)) {
+        if (empty($orderHistory)) {
             return [];
         }
 
-        return array_map(function (OrderHistoryDTO $history) {
+        return array_map(function ($history) {
+            // Support raw arrays passed directly
+            if (is_array($history)) {
+                return $history;
+            }
+
+            // Support OrderHistoryDTO instances
             return [
                 'purchased_at' => $history->purchasedAt,
                 'amount' => $history->amount,

@@ -159,12 +159,16 @@ class TabbyPaymentDTOBuilder
             throw new \InvalidArgumentException('Buyer is required');
         }
 
-        if ($this->shippingAddress === null) {
-            throw new \InvalidArgumentException('Shipping address is required');
-        }
-
         if (empty($this->items)) {
             throw new \InvalidArgumentException('At least one item is required');
+        }
+
+        if ($this->buyerHistory === null) {
+            throw new \InvalidArgumentException('Buyer history is required for Tabby');
+        }
+
+        if ($this->orderHistory === null) {
+            throw new \InvalidArgumentException('Order history is required for Tabby');
         }
 
         return new TabbyPaymentDTO(

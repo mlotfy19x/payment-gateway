@@ -318,8 +318,10 @@ use MLQuarizm\PaymentGateway\Factory\PaymentGatewayFactory;
 use MLQuarizm\PaymentGateway\DTOs\TabbyPaymentDTO;
 use MLQuarizm\PaymentGateway\DTOs\PaymentOrderDTO;
 use MLQuarizm\PaymentGateway\DTOs\BuyerDTO;
+use MLQuarizm\PaymentGateway\DTOs\BuyerHistoryDTO;
 use MLQuarizm\PaymentGateway\DTOs\AddressDTO;
 use MLQuarizm\PaymentGateway\DTOs\OrderItemDTO;
+
 // Build DTOs
 $orderDTO = new PaymentOrderDTO(
     id: $order->id,
@@ -331,8 +333,8 @@ $orderDTO = new PaymentOrderDTO(
 
 $buyerDTO = new BuyerDTO(
     name: $client->name,
-    email: $client->email,
-    phone: $client->full_phone
+    email: $client->email,   // optional (nullable)
+    phone: $client->full_phone // optional (nullable)
 );
 
 $addressDTO = new AddressDTO(
@@ -350,11 +352,20 @@ $itemDTO = new OrderItemDTO(
     unitPrice: 500.00
 );
 
+$buyerHistoryDTO = new BuyerHistoryDTO(
+    registeredSince: $client->created_at->toISOString(),
+    loyaltyLevel: 12,
+    isPhoneVerified: true,
+    isEmailVerified: (bool) $client->email_verified_at
+);
+
 $tabbyDTO = new TabbyPaymentDTO(
     order: $orderDTO,
     buyer: $buyerDTO,
-    shippingAddress: $addressDTO,
-    items: [$itemDTO]
+    shippingAddress: $addressDTO,    // optional (nullable)
+    items: [$itemDTO],
+    buyerHistory: $buyerHistoryDTO,  // required
+    orderHistory: []                 // required (empty array if no previous orders)
 );
 
 // Initiate payment
@@ -446,7 +457,11 @@ The **webhook** endpoint is unchanged (returns 200, no redirect).
 
 ### Using Builder Pattern
 
-#### Single Item
+> **Important:** `buyerHistory()` and `orderHistory()` are **required** for Tabby. Tabby uses this data for pre-scoring and risk assessment. If you don't provide them, the builder will throw an `InvalidArgumentException`. Pass an empty array `[]` to `orderHistory()` if the buyer has no previous orders.
+
+> **Note:** `shippingAddress()` is **optional**. `buyer()` requires only `name` — `email` and `phone` are optional (pass `null` or empty string to omit them from the Tabby request).
+
+#### Full Example
 
 ```php
 use MLQuarizm\PaymentGateway\Builders\TabbyPaymentDTOBuilder;
@@ -471,6 +486,41 @@ $tabbyDTO = TabbyPaymentDTOBuilder::new()
         zip: $order->postal_code,
         countryCode: 'SA'
     )
+    ->orderHistory([
+        [
+            'purchased_at' => $previousOrder->created_at->toISOString(),
+            'amount' => '350.00',
+            'status' => 'new',
+            'buyer' => [
+                'name' => $client->name,
+                'email' => $client->email,
+                'phone' => $client->full_phone,
+            ],
+            'shipping_address' => [
+                'city' => $previousOrder->city->name,
+                'address' => $previousOrder->address,
+                'zip' => $previousOrder->postal_code,
+            ],
+            'payment_method' => $previousOrder->payment_method,
+            'items' => [
+                [
+                    'reference_id' => "service-{$previousOrder->service->id}",
+                    'title' => $previousOrder->service->name,
+                    'description' => $previousOrder->service->description ?? '',
+                    'quantity' => 1,
+                    'unit_price' => '350.00',
+                    'discount_amount' => '0.00',
+                    'category' => 'Building inspection',
+                ],
+            ],
+        ],
+    ])
+    ->buyerHistory(
+        registeredSince: $client->created_at->toISOString(),
+        loyaltyLevel: 12,
+        isPhoneVerified: true,
+        isEmailVerified: (bool) $client->email_verified_at,
+    )
     ->item(
         referenceId: "service-{$order->service->id}",
         title: $order->service->name,
@@ -488,6 +538,78 @@ $paymentInfo = $gateway->initiatePayment($tabbyDTO);
 if (!$paymentInfo['success']) {
     return back()->withErrors(['payment' => $paymentInfo['message']]);
 }
+```
+
+#### Using OrderHistoryDTO
+
+Instead of raw arrays, you can use `OrderHistoryDTO` instances for type safety:
+
+```php
+use MLQuarizm\PaymentGateway\DTOs\OrderHistoryDTO;
+use MLQuarizm\PaymentGateway\DTOs\BuyerDTO;
+use MLQuarizm\PaymentGateway\DTOs\AddressDTO;
+use MLQuarizm\PaymentGateway\DTOs\OrderItemDTO;
+
+$orderHistoryItems = [
+    new OrderHistoryDTO(
+        purchasedAt: $previousOrder->created_at->toISOString(),
+        amount: '350.00',
+        status: 'new',
+        buyer: new BuyerDTO(
+            name: $client->name,
+            email: $client->email,
+            phone: $client->full_phone,
+        ),
+        shippingAddress: new AddressDTO(
+            city: $previousOrder->city->name,
+            address: $previousOrder->address,
+            zip: $previousOrder->postal_code,
+        ),
+        paymentMethod: 'credit_card',
+        items: [
+            new OrderItemDTO(
+                referenceId: "service-{$previousOrder->service->id}",
+                title: $previousOrder->service->name,
+                description: $previousOrder->service->description ?? '',
+                quantity: 1,
+                unitPrice: 350.00,
+            ),
+        ],
+    ),
+];
+
+$tabbyDTO = TabbyPaymentDTOBuilder::new()
+    ->order(...)
+    ->buyer(...)
+    ->orderHistory($orderHistoryItems)
+    ->buyerHistory(...)
+    ->item(...)
+    ->build();
+```
+
+> **Note:** `orderHistory()` accepts both raw arrays and `OrderHistoryDTO[]`. Raw arrays are sent to Tabby as-is, while `OrderHistoryDTO` instances are serialized by the package.
+
+#### Minimal Example (no shipping address, no email/phone, new buyer with no order history)
+
+```php
+$tabbyDTO = TabbyPaymentDTOBuilder::new()
+    ->order(
+        id: $order->id,
+        referenceId: (string) $order->id,
+        amount: 500.00,
+    )
+    ->buyer(name: $client->name)
+    ->orderHistory([])  // required — pass empty array if no previous orders
+    ->buyerHistory(
+        registeredSince: $client->created_at->toISOString(),
+        loyaltyLevel: 0,
+    )
+    ->item(
+        referenceId: "service-{$order->service->id}",
+        title: $order->service->name,
+        unitPrice: 500.00
+    )
+    ->build();
 ```
 
 #### Multiple Items

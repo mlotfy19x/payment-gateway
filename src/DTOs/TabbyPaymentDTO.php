@@ -7,10 +7,10 @@ class TabbyPaymentDTO
     public function __construct(
         public PaymentOrderDTO $order,
         public BuyerDTO $buyer,
-        public AddressDTO $shippingAddress,
+        public ?AddressDTO $shippingAddress = null,
         public array $items, // OrderItemDTO[]
-        public ?BuyerHistoryDTO $buyerHistory = null,
-        public ?array $orderHistory = null // OrderHistoryDTO[]
+        public BuyerHistoryDTO $buyerHistory,
+        public array $orderHistory = [] // array[] raw order history data
     ) {
         $this->validate();
     }
@@ -27,11 +27,9 @@ class TabbyPaymentDTO
             }
         }
 
-        if ($this->orderHistory !== null) {
-            foreach ($this->orderHistory as $history) {
-                if (!$history instanceof OrderHistoryDTO) {
-                    throw new \InvalidArgumentException('All order history items must be instances of OrderHistoryDTO');
-                }
+        foreach ($this->orderHistory as $history) {
+            if (!is_array($history) && !$history instanceof OrderHistoryDTO) {
+                throw new \InvalidArgumentException('All order history items must be arrays or instances of OrderHistoryDTO');
             }
         }
     }
