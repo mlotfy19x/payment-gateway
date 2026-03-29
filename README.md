@@ -362,6 +362,16 @@ $factory = new PaymentGatewayFactory();
 $gateway = $factory->make('tabby');
 $paymentInfo = $gateway->initiatePayment($tabbyDTO);
 
+// IMPORTANT: Check if payment was rejected before redirecting (Tabby Pre-scoring Reject)
+if (!$paymentInfo['success']) {
+    // Tabby rejected the session (e.g. buyer not eligible, amount too high/low)
+    // $paymentInfo['message']              → localized rejection message (AR/EN)
+    // $paymentInfo['rejection_reason']     → e.g. 'not_available', 'order_amount_too_high', 'order_amount_too_low'
+    // $paymentInfo['rejection_reason_code'] → Tabby internal code (nullable)
+    // $paymentInfo['status']               → e.g. 'rejected'
+    return back()->withErrors(['payment' => $paymentInfo['message']]);
+}
+
 // Record the transaction so callback/webhook can find and update it (required)
 use MLQuarizm\PaymentGateway\Facades\PaymentGateway;
 PaymentGateway::recordTransaction(
@@ -378,6 +388,52 @@ return redirect($paymentInfo['url']);
 ```
 
 **Important:** You must call `PaymentGateway::recordTransaction(...)` (or create a row with the package’s `PaymentTransaction` model) **after** `initiatePayment` and **before** redirecting the user to the gateway. Otherwise the callback/webhook will not find a transaction to update.
+
+### Handling Tabby Pre-scoring Rejection
+
+Tabby performs a **Background Pre-scoring** check when you call `initiatePayment()`. If the buyer is not eligible (e.g. credit risk, amount limits), Tabby rejects the session **immediately** — before the user is ever redirected to Tabby’s checkout page.
+
+**You must check `$paymentInfo[‘success’]` before redirecting.** If you skip this check and blindly call `redirect($paymentInfo[‘url’])`, the URL will be `null` and the user will see a broken page instead of a helpful rejection message.
+
+```php
+$paymentInfo = $gateway->initiatePayment($tabbyDTO);
+
+if (!$paymentInfo[‘success’]) {
+    // Session was rejected by Tabby’s pre-scoring
+    return back()->withErrors([‘payment’ => $paymentInfo[‘message’]]);
+}
+
+// Only record transaction and redirect if session was created successfully
+PaymentGateway::recordTransaction(...);
+return redirect($paymentInfo[‘url’]);
+```
+
+**Response on rejection:**
+
+```php
+[
+    ‘url’ => null,
+    ‘session_id’ => null,
+    ‘payment_id’ => null,
+    ‘success’ => false,
+    ‘message’ => ‘Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order.’,
+    ‘rejection_reason’ => ‘not_available’,        // or ‘order_amount_too_high’, ‘order_amount_too_low’
+    ‘rejection_reason_code’ => ‘...’,              // Tabby internal code (nullable)
+    ‘status’ => ‘rejected’,
+]
+```
+
+**Rejection reasons:**
+
+| Reason | English Message | Arabic Message |
+|--------|----------------|----------------|
+| `not_available` | Sorry, Tabby is unable to approve this purchase. Please use an alternative payment method for your order. | ... تابي غير قادرة على الموافقة |
+| `order_amount_too_high` | This purchase is above your current spending limit with Tabby, try a smaller cart or use another payment method. | ... قيمة الطلب تفوق الحد الأقصى |
+| `order_amount_too_low` | The purchase amount is below the minimum amount required to use Tabby, try adding more items or use another payment method. | ... قيمة الطلب أقل من الحد الأدنى |
+
+The message language is determined automatically based on `app()->getLocale()`.
+
+**Testing pre-scoring rejection:** See [Tabby Testing Guidelines - Background Pre-scoring Reject](https://docs.tabby.ai/testing-guidelines/testing-credentials#2-background-pre-scoring-reject) for test credentials that trigger rejection.
 
 ### Callback flow: default is package Blade (never JSON)
 
@@ -427,6 +483,11 @@ $tabbyDTO = TabbyPaymentDTOBuilder::new()
 $factory = new PaymentGatewayFactory();
 $gateway = $factory->make('tabby');
 $paymentInfo = $gateway->initiatePayment($tabbyDTO);
+
+// Always check for rejection before redirecting (see "Handling Tabby Pre-scoring Rejection" below)
+if (!$paymentInfo['success']) {
+    return back()->withErrors(['payment' => $paymentInfo['message']]);
+}
 ```
 
 #### Multiple Items
@@ -561,6 +622,11 @@ $tamaraDTO = TamaraPaymentDTOBuilder::new()
 $factory = new PaymentGatewayFactory();
 $gateway = $factory->make('tamara');
 $paymentInfo = $gateway->initiatePayment($tamaraDTO);
+
+// Check for rejection before redirecting
+if (!$paymentInfo['success']) {
+    return back()->withErrors(['payment' => $paymentInfo['message'] ?? 'Payment rejected']);
+}
 
 // Record the transaction and redirect (same as Tabby)
 PaymentGateway::recordTransaction($order, (string) $order->id, $paymentInfo['payment_id'] ?? null, 'tamara', 500.00, $paymentInfo);
