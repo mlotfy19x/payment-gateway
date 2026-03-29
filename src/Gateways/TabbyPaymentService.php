@@ -52,6 +52,10 @@ class TabbyPaymentService implements PaymentGatewayInterface
             'session_id' => $checkout['session_id'] ?? null,
             'payment_id' => $checkout['payment_id'] ?? null,
             'success' => $checkout['success'] ?? null,
+            'message' => $checkout['message'] ?? null,
+            'rejection_reason' => $checkout['rejection_reason'] ?? null,
+            'rejection_reason_code' => $checkout['rejection_reason_code'] ?? null,
+            'status' => $checkout['status'] ?? null,
         ];
     }
 
@@ -245,7 +249,7 @@ class TabbyPaymentService implements PaymentGatewayInterface
 
         return [
             'success' => false,
-            'message' => $this->getRejectionMessage($rejectionReason),
+            'message' => $this->getRejectionMessage((string) $rejectionReason),
             'rejection_reason' => $rejectionReason,
             'rejection_reason_code' => $rejectionReasonCode,
             'status' => $data['status'] ?? 'rejected',
@@ -262,9 +266,18 @@ class TabbyPaymentService implements PaymentGatewayInterface
 
         $json = $response->json();
 
+        $rejectionReason = $json['configuration']['products']['installments']['rejection_reason']
+            ?? $json['rejection_reason']
+            ?? 'unknown';
+
+        $rejectionReasonCode = $json['rejection_reason_code'] ?? null;
+
         return [
             'success' => false,
-            'message' => $json['message'] ?? 'Checkout creation failed',
+            'message' => $this->getRejectionMessage((string) $rejectionReason),
+            'rejection_reason' => $rejectionReason,
+            'rejection_reason_code' => $rejectionReasonCode,
+            'status' => $json['status'] ?? 'rejected',
             'errors' => $json['errors'] ?? [],
         ];
     }
