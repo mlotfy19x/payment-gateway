@@ -145,11 +145,11 @@ class TabbyPaymentService implements PaymentGatewayInterface
 
     private function buildBuyerData(BuyerDTO $buyer): array
     {
-        return [
+        return array_filter([
             'name' => $buyer->name,
             'email' => $buyer->email,
             'phone' => $buyer->phone,
-        ];
+        ], fn($value) => $value !== null);
     }
 
     private function buildShippingAddress(AddressDTO $address): array

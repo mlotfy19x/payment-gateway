@@ -6,9 +6,13 @@ class BuyerDTO
 {
     public function __construct(
         public string $name,
-        public string $email,
-        public string $phone
+        public ?string $email = null,
+        public ?string $phone = null
     ) {
+        // Normalize empty strings to null
+        $this->email = filled($this->email) ? $this->email : null;
+        $this->phone = filled($this->phone) ? $this->phone : null;
+
         $this->validate();
     }
 
@@ -18,12 +22,8 @@ class BuyerDTO
             throw new \InvalidArgumentException('Buyer name is required');
         }
 
-        if (empty($this->email) || !filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            throw new \InvalidArgumentException('Valid buyer email is required');
-        }
-
-        if (empty($this->phone)) {
-            throw new \InvalidArgumentException('Buyer phone is required');
+        if ($this->email !== null && !filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Invalid buyer email format');
         }
     }
 }

@@ -44,8 +44,8 @@ class TabbyPaymentDTOBuilder
 
     public function buyer(
         string $name,
-        string $email,
-        string $phone
+        ?string $email = null,
+        ?string $phone = null
     ): self {
         $this->buyer = new BuyerDTO(
             name: $name,
