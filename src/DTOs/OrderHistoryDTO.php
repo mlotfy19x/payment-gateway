@@ -9,9 +9,9 @@ class OrderHistoryDTO
         public string $amount,
         public string $status,
         public BuyerDTO $buyer,
-        public ?AddressDTO $shippingAddress = null,
         public string $paymentMethod,
-        public array $items
+        public array $items,
+        public ?AddressDTO $shippingAddress = null,
     ) {
     }
 }
