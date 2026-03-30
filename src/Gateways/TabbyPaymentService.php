@@ -157,8 +157,12 @@ class TabbyPaymentService implements PaymentGatewayInterface
         ], fn($value) => $value !== null);
     }
 
-    private function buildShippingAddress(AddressDTO $address): array
+    private function buildShippingAddress(?AddressDTO $address): ?array
     {
+        if ($address === null) {
+            return null;
+        }
+
         return [
             'city' => $address->city,
             'address' => $address->address,
@@ -209,14 +213,14 @@ class TabbyPaymentService implements PaymentGatewayInterface
             return [];
         }
 
-        return array_map(function ($history) {
+        return array_map(function ($history) use ($orderHistory) {
             // Support raw arrays passed directly
             if (is_array($history)) {
                 return $history;
             }
 
             // Support OrderHistoryDTO instances
-            return [
+            return array_filter([
                 'purchased_at' => $history->purchasedAt,
                 'amount' => $history->amount,
                 'status' => $history->status,
@@ -231,7 +235,7 @@ class TabbyPaymentService implements PaymentGatewayInterface
                         'unit_price' => $this->formatAmount($item->unitPrice),
                     ];
                 }, $history->items),
-            ];
+            ], fn($value) => $value !== null);
         }, $orderHistory);
     }
 
