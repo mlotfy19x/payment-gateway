@@ -3,6 +3,7 @@
 namespace MLQuarizm\PaymentGateway\Http\Controllers;
 
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\App;
 use Illuminate\View\View;
 use MLQuarizm\PaymentGateway\Models\PaymentTransaction;
 
@@ -15,6 +16,11 @@ class PaymentStatusController extends Controller
      */
     public function show(string $status): View
     {
+        $locale = request('locale');
+        if (in_array($locale, ['ar', 'en'], true)) {
+            App::setLocale($locale);
+        }
+
         $gateway = request('gateway', '');
         $transactionId = request('transaction_id');
         [$url, $hasRedirect] = $this->buildRedirectUrl($transactionId, $status, $gateway);

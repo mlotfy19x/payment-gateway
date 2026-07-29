@@ -96,6 +96,10 @@ class PaymentCallbackController extends Controller
             if ($transactionId !== null) {
                 $params['transaction_id'] = $transactionId;
             }
+            $locale = request('locale');
+            if (in_array($locale, ['ar', 'en'], true)) {
+                $params['locale'] = $locale;
+            }
             if ($status === 'cancel') {
                 $params['ar_message'] = 'لقد ألغيت الدفعة. فضلاً حاول مجددًا أو اختر طريقة دفع أخرى';
                 $params['en_message'] = 'You aborted the payment. Please retry or choose another payment method.';
@@ -143,7 +147,12 @@ class PaymentCallbackController extends Controller
     {
         try {
             if (Route::has('payment-gateway.status')) {
-                $url = route('payment-gateway.status', ['status' => 'error', 'gateway' => $gateway]);
+                $params = ['status' => 'error', 'gateway' => $gateway];
+                $locale = request('locale');
+                if (in_array($locale, ['ar', 'en'], true)) {
+                    $params['locale'] = $locale;
+                }
+                $url = route('payment-gateway.status', $params);
                 return $url . (str_contains($url, '?') ? '&' : '?') . 'status=error';
             }
         } catch (\Throwable $e) {

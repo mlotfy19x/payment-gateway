@@ -340,11 +340,23 @@ class TabbyPaymentService implements PaymentGatewayInterface
 
     private function getMerchantUrls(): array
     {
+        $locale = $this->getLocale();
+
         return [
-            'success' => $this->successUrl,
-            'cancel' => $this->cancelUrl,
-            'failure' => $this->failureUrl,
+            'success' => $this->withLocale($this->successUrl, $locale),
+            'cancel' => $this->withLocale($this->cancelUrl, $locale),
+            'failure' => $this->withLocale($this->failureUrl, $locale),
         ];
+    }
+
+    private function withLocale(string $url, string $locale): string
+    {
+        if (empty($url)) {
+            return $url;
+        }
+
+        $separator = str_contains($url, '?') ? '&' : '?';
+        return $url . $separator . 'locale=' . $locale;
     }
 
     private function getLocale(): string
