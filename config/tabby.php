@@ -18,6 +18,17 @@ return [
 
     'merchant_code' => env('TABBY_MERCHANT_CODE', ''),
 
+    /*
+    |--------------------------------------------------------------------------
+    | API Base URL
+    |--------------------------------------------------------------------------
+    |
+    | Saudi Arabia (KSA): https://api.tabby.sa/api/v2
+    | UAE / Kuwait:       https://api.tabby.ai/api/v2
+    |
+    */
+    'base_url' => env('TABBY_BASE_URL', 'https://api.tabby.sa/api/v2'),
+
     'success_url' => env('TABBY_SUCCESS_URL', ''),
 
     'failure_url' => env('TABBY_FAILURE_URL', ''),
@@ -34,14 +45,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Webhook Signature Verification
+    | Webhook Verification
     |--------------------------------------------------------------------------
     |
-    | Enable/disable webhook signature verification for Tabby.
-    | When enabled, webhooks without valid signature will be rejected.
-    | When disabled, webhooks will be accepted without signature verification.
+    | Tabby sends a custom static header on every webhook (NOT an HMAC).
+    | The header name and value are set when registering the webhook via API.
+    |
+    | TABBY_WEBHOOK_VERIFY_SIGNATURE=true  → check header value
+    | TABBY_WEBHOOK_HEADER                 → header name  (e.g. X-Tabby-Signature)
+    | TABBY_WEBHOOK_SECRET                 → expected header value (your random secret)
     |
     */
 
     'webhook_verify_signature' => env('TABBY_WEBHOOK_VERIFY_SIGNATURE', false),
+
+    'webhook_header' => env('TABBY_WEBHOOK_HEADER', 'X-Tabby-Signature'),
+
+    'webhook_secret' => env('TABBY_WEBHOOK_SECRET', ''),
 ];

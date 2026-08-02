@@ -98,58 +98,48 @@ class WebhookVerificationService
     }
 
     /**
-     * Verify Tabby webhook signature
+     * Verify Tabby webhook
      *
-     * Tabby typically uses HMAC-SHA256 signature in headers
-     * The signature is usually in X-Tabby-Signature header
+     * Tabby does NOT use HMAC. When registering a webhook you provide a custom
+     * header name + value. Tabby sends that exact header on every request.
+     * We compare the received header value against the configured secret.
+     *
+     * Configure in .env:
+     *   TABBY_WEBHOOK_VERIFY_SIGNATURE=true
+     *   TABBY_WEBHOOK_HEADER=X-Tabby-Signature   (the header name you registered)
+     *   TABBY_WEBHOOK_SECRET=your-random-secret   (the header value you registered)
      *
      * @param Request $request
      * @return bool
      */
     private function verifyTabby(Request $request): bool
     {
-        $secretKey = config('tabby.secret_key');
-
-        if (empty($secretKey)) {
-            Log::warning('Tabby webhook: Secret key not configured');
-            return false;
-        }
-
-        // Tabby may send signature in different headers
-        // Common headers: X-Tabby-Signature, X-Signature, Signature
-        $signature = $request->header('X-Tabby-Signature') 
-            ?? $request->header('X-Signature')
-            ?? $request->header('Signature');
-
-        if (!$signature) {
-            Log::warning('Tabby webhook: No signature header found');
-            // For now, we'll allow webhooks without signature if not configured
-            // This can be made strict later when Tabby documentation is confirmed
-            return config('tabby.webhook_verify_signature', false) === false;
-        }
-
-        try {
-            // Get raw request body
-            $payload = $request->getContent();
-            
-            // Calculate expected signature using HMAC-SHA256
-            $expectedSignature = hash_hmac('sha256', $payload, $secretKey);
-
-            // Compare signatures (use hash_equals for timing attack protection)
-            if (!hash_equals($expectedSignature, $signature)) {
-                Log::warning('Tabby webhook: Signature verification failed', [
-                    'expected' => substr($expectedSignature, 0, 10) . '...',
-                    'received' => substr($signature, 0, 10) . '...',
-                ]);
-                return false;
-            }
-
-            Log::info('Tabby webhook: Signature verified successfully');
+        if (!config('tabby.webhook_verify_signature', false)) {
             return true;
-        } catch (\Exception $e) {
-            Log::warning('Tabby webhook: Error verifying signature', ['error' => $e->getMessage()]);
+        }
+
+        $expectedSecret = config('tabby.webhook_secret', '');
+        $headerName     = config('tabby.webhook_header', 'X-Tabby-Signature');
+
+        if (empty($expectedSecret)) {
+            Log::warning('Tabby webhook: TABBY_WEBHOOK_SECRET is not configured');
             return false;
         }
+
+        $receivedValue = $request->header($headerName);
+
+        if (!$receivedValue) {
+            Log::warning('Tabby webhook: Expected header not found', ['header' => $headerName]);
+            return false;
+        }
+
+        if (!hash_equals($expectedSecret, $receivedValue)) {
+            Log::warning('Tabby webhook: Header value mismatch', ['header' => $headerName]);
+            return false;
+        }
+
+        Log::info('Tabby webhook: Verified successfully');
+        return true;
     }
 
     /**

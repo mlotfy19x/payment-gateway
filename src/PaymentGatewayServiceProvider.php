@@ -2,6 +2,7 @@
 
 namespace MLQuarizm\PaymentGateway;
 
+use MLQuarizm\PaymentGateway\Console\RegisterTabbyWebhookCommand;
 use MLQuarizm\PaymentGateway\Services\PaymentGatewayService;
 use Illuminate\Support\ServiceProvider;
 
@@ -45,5 +46,12 @@ class PaymentGatewayServiceProvider extends ServiceProvider
             __DIR__ . '/../config/payment-gateway.php',
             'payment-gateway'
         );
+
+        // Register artisan commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                RegisterTabbyWebhookCommand::class,
+            ]);
+        }
     }
 }

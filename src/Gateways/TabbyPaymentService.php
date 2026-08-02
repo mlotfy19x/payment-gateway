@@ -18,7 +18,7 @@ class TabbyPaymentService implements PaymentGatewayInterface
     private const API_VERSION = 'v2';
     private const DEFAULT_CURRENCY = 'SAR';
 
-    protected string $baseUrl = 'https://api.tabby.ai/api/v2';
+    protected string $baseUrl = 'https://api.tabby.sa/api/v2';
     protected string $secretKey;
     protected string $publicKey;
     protected string $merchantCode;
@@ -36,6 +36,7 @@ class TabbyPaymentService implements PaymentGatewayInterface
         $this->successUrl = config('tabby.success_url');
         $this->cancelUrl = config('tabby.cancel_url');
         $this->failureUrl = config('tabby.failure_url');
+        $this->baseUrl = config('tabby.base_url', 'https://api.tabby.sa/api/v2');
     }
 
     public function initiatePayment(mixed $paymentData): array
