@@ -174,7 +174,7 @@ class TabbyPaymentService implements PaymentGatewayInterface
     {
         return [
             'reference_id' => $order->referenceId,
-            'updated_at' => now()->toIso8601String(),
+            'updated_at' => now()->utc()->format('Y-m-d\TH:i:s\Z'),
             'tax_amount' => '0.00',
             'shipping_amount' => '0.00',
             'discount_amount' => '0.00',
@@ -192,7 +192,7 @@ class TabbyPaymentService implements PaymentGatewayInterface
                 'quantity' => $item->quantity,
                 'unit_price' => $this->formatAmount($item->unitPrice),
                 'discount_amount' => '0.00',
-                'category' => 'General',
+                'category' => $item->category ?? 'General',
             ];
         }, $items);
     }

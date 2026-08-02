@@ -87,14 +87,16 @@ class TabbyPaymentDTOBuilder
         string $title,
         ?string $description = null,
         int $quantity = 1,
-        float $unitPrice
+        float $unitPrice,
+        ?string $category = null,
     ): self {
         $this->items[] = new OrderItemDTO(
             referenceId: $referenceId,
             title: $title,
             description: $description,
             quantity: $quantity,
-            unitPrice: $unitPrice
+            unitPrice: $unitPrice,
+            category: $category,
         );
 
         return $this;
@@ -117,7 +119,8 @@ class TabbyPaymentDTOBuilder
                     title: $item['title'] ?? $item['name'] ?? '',
                     description: $item['description'] ?? null,
                     quantity: $item['quantity'] ?? 1,
-                    unitPrice: $item['unitPrice'] ?? $item['unit_price'] ?? 0.0
+                    unitPrice: $item['unitPrice'] ?? $item['unit_price'] ?? 0.0,
+                    category: $item['category'] ?? null,
                 );
             } else {
                 throw new \InvalidArgumentException('Items must be instances of OrderItemDTO or arrays');

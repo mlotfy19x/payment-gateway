@@ -9,7 +9,8 @@ class OrderItemDTO
         public string $title,
         public ?string $description = null,
         public int $quantity = 1,
-        public float $unitPrice
+        public float $unitPrice,
+        public ?string $category = null,
     ) {
         $this->validate();
     }
