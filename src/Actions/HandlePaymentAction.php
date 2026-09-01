@@ -112,7 +112,7 @@ class HandlePaymentAction
         }
 
         // 5. Handle Success (idempotent: if already SUCCESS e.g. from webhook, just return success for redirect)
-        $alreadySuccess = $transaction->status === PaymentStatusEnum::SUCCESS->value;
+        $alreadySuccess = $transaction->status === PaymentStatusEnum::SUCCESS;
         if (!$alreadySuccess) {
             $transaction->update([
                 'status' => PaymentStatusEnum::SUCCESS,
